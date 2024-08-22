@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 <path to app source>"
+  exit 1
+fi
+
+tmpdir=$(mktemp -d)
+source=$1
+args=$2
+
+
+echo "Scanning ${source}"
+for scanner in tools.d/*; do
+  name=$(basename "${scanner}")
+  report="${tmpdir}/${name}.sarif"
+  bash "$scanner" "$source" > "${report}" || rm -f "${report}"
+done
+echo "Scanning complete."
+
+if [ -z "${args}" ]; then
+  echo "Summary:"
+  sarif summary "${tmpdir}"/*.sarif
+elif [ "$args" == "html" ]; then
+  echo "HTML report at:"
+  html_report="${source}/statica.html"
+  sarif html -o "${html_report}" "${tmpdir}"/*.sarif
+  echo "${html_report}"
+fi
+
+rm -rf "${tmpdir}"

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -euo pipefail
+
+which trivy > /dev/null  || exit 1
+
+source=$1
+
+trivy -q --format sarif fs "${source}"
