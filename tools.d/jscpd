@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# pre flight checks
+set -euo pipefail
+which -s jscpd || exit 1
+npm ls -g | grep -q jscpd-sarif-reporter || exit 1
+
+# runtime params
+source=$1
+tmpdir=$(mktemp -d)
+
+# run command and send output to stderr, sarif to file, send sarif to stdout
+jscpd --reporters sarif -o "${tmpdir}" "${source}" 1>&2
+sed -E 's/(Clone detected in [a-z0-9]+),[^"]+/\1/g' "${tmpdir}/jscpd-sarif.json"
+
+# clean up
+rm -rf "${tmpdir}"

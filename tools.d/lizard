@@ -12,9 +12,9 @@ choose() {
   echo "${input}" | cut -d ':' -f"${column}"
 }
 
-# run the scan, warnings only
+# run the scan, warnings only, ignore non-zero return code
 result=${tmpdir}/lizard.out
-lizard -w -o "${result}" "${source}"
+lizard -w -o "${result}" "${source}" || true
 
 # iterate over results, and build up a JSON list of findings
 awk '{print $1, $3, $5, $7}' "${result}" | while read _filename function nloc ccn ; do
@@ -23,9 +23,9 @@ awk '{print $1, $3, $5, $7}' "${result}" | while read _filename function nloc cc
 
   cat <<-EOF >> "${tmpdir}"/findings.json
   {
-      "ruleId": "Complexity is above 15",
+      "ruleId": "complexity-above-15",
       "message": {
-          "text": "Function $function has ${nloc} lines of code, and ${ccn} complexity."
+          "text": "Function has a cyclomatic complexity value higher than 15"
       },
       "locations": [
           {

@@ -2,23 +2,25 @@
 
 set -euo pipefail
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 1 ]; then
   echo "Usage: $0 <path to app source>"
   exit 1
 fi
 
-tmpdir=$(mktemp -d)
-source=$1
-args=$2
 
+source=$1
+args=${2:-""}
+tmpdir=$(mktemp -d)
 
 echo "Scanning ${source}"
 for scanner in tools.d/*; do
   name=$(basename "${scanner}")
   report="${tmpdir}/${name}.sarif"
+  echo "Running ${name} and reporting to ${report}"
   bash "$scanner" "$source" > "${report}" || rm -f "${report}"
 done
-echo "Scanning complete."
+echo "Scanning complete.  Reports found:"
+ls ${tmpdir}
 
 if [ -z "${args}" ]; then
   echo "Summary:"
