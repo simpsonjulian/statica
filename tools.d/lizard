@@ -1,0 +1,66 @@
+#!/bin/bash
+
+which -s lizard || exit 1
+
+source=$1
+tmpdir=$(mktemp -d)
+
+choose() {
+  local input=$1
+  local column=$2
+  echo "${input}" | cut -d ':' -f"${column}"
+}
+
+# run the scan, warnings only
+result=${tmpdir}/lizard.out
+lizard -w -o "${result}" "${source}"
+
+# iterate over results, and build up a JSON list of findings
+awk '{print $1, $3, $5, $7}' "${result}" | while read _filename function nloc ccn ; do
+  filename=$(choose "${_filename}" 1)
+  startline=$(choose "${_filename}" 2)
+
+  cat <<-EOF >> "${tmpdir}"/findings.json
+  {
+      "ruleId": "Complexity is above 15",
+      "message": {
+          "text": "Function $function has ${nloc} lines of code, and ${ccn} complexity."
+      },
+      "locations": [
+          {
+              "physicalLocation": {
+                  "artifactLocation": {
+                      "uri": "$filename"
+                  },
+                  "region": {
+                      "startLine": ${startline}
+                  }
+              }
+          }
+      ]
+  },
+	EOF
+
+done
+
+# wrap the findings in some metadata
+cat <<-EOF
+  {
+      "version": "2.1.0",
+      "runs": [
+          {
+              "tool": {
+                  "driver": {
+                      "name": "lizard",
+                      "informationUri": "https://github.com/terryyin/lizard",
+                      "rules": []
+                  }
+              },
+              "results": [$(sed '$ s/,$//' "${tmpdir}"/findings.json)]
+          }
+      ]
+  }
+EOF
+
+# clean up
+rm -rf "${tmpdir}"
