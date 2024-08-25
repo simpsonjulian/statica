@@ -1,8 +1,7 @@
 #!/bin/bash
 
 set -euo pipefail
-
-which dependency-check > /dev/null || exit 1
+which -s dependency-check || exit 1
 
 source=$1
 
