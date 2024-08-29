@@ -1,207 +1,701 @@
 {
-  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
   "version": "2.1.0",
-  "properties": {
-    "comment": "This sample demonstrates the use of code flows to provide information about a result."
-  },
+  "$schema": "https://json.schemastore.org/sarif-2.1.0-rtm.5.json",
   "runs": [
     {
       "tool": {
         "driver": {
-          "name": "SarifSamples",
-          "version": "1.0"
+          "fullName": "Trivy Vulnerability Scanner",
+          "informationUri": "https://github.com/aquasecurity/trivy",
+          "name": "Trivy",
+          "rules": [
+            {
+              "id": "AVD-AWS-0077",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "RDS Cluster and RDS instance should have backup retention longer than default 1 day"
+              },
+              "fullDescription": {
+                "text": "RDS backup retention for clusters defaults to 1 day, this may not be enough to identify and respond to an issue. Backup retention periods should be set to a period that is a balance on cost and limiting risk."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0077",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0077\nType: Terraform Security Check\nSeverity: MEDIUM\nCheck: RDS Cluster and RDS instance should have backup retention longer than default 1 day\nMessage: Instance has very low backup retention period.\nLink: [AVD-AWS-0077](https://avd.aquasec.com/misconfig/avd-aws-0077)\nRDS backup retention for clusters defaults to 1 day, this may not be enough to identify and respond to an issue. Backup retention periods should be set to a period that is a balance on cost and limiting risk.",
+                "markdown": "**Misconfiguration AVD-AWS-0077**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|MEDIUM|RDS Cluster and RDS instance should have backup retention longer than default 1 day|Instance has very low backup retention period.|[AVD-AWS-0077](https://avd.aquasec.com/misconfig/avd-aws-0077)|\n\nRDS backup retention for clusters defaults to 1 day, this may not be enough to identify and respond to an issue. Backup retention periods should be set to a period that is a balance on cost and limiting risk."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0080",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "RDS encryption has not been enabled at a DB Instance level."
+              },
+              "fullDescription": {
+                "text": "Encryption should be enabled for an RDS Database instances. \n\nWhen enabling encryption by setting the kms_key_id."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0080",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0080\nType: Terraform Security Check\nSeverity: HIGH\nCheck: RDS encryption has not been enabled at a DB Instance level.\nMessage: Instance does not have storage encryption enabled.\nLink: [AVD-AWS-0080](https://avd.aquasec.com/misconfig/avd-aws-0080)\nEncryption should be enabled for an RDS Database instances. \n\nWhen enabling encryption by setting the kms_key_id.",
+                "markdown": "**Misconfiguration AVD-AWS-0080**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|HIGH|RDS encryption has not been enabled at a DB Instance level.|Instance does not have storage encryption enabled.|[AVD-AWS-0080](https://avd.aquasec.com/misconfig/avd-aws-0080)|\n\nEncryption should be enabled for an RDS Database instances. \n\nWhen enabling encryption by setting the kms_key_id."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0133",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Enable Performance Insights to detect potential problems"
+              },
+              "fullDescription": {
+                "text": "Enabling Performance insights allows for greater depth in monitoring data.\n\t\t\nFor example, information about active sessions could help diagose a compromise or assist in the investigation"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0133",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0133\nType: Terraform Security Check\nSeverity: LOW\nCheck: Enable Performance Insights to detect potential problems\nMessage: Instance does not have performance insights enabled.\nLink: [AVD-AWS-0133](https://avd.aquasec.com/misconfig/avd-aws-0133)\nEnabling Performance insights allows for greater depth in monitoring data.\n\t\t\nFor example, information about active sessions could help diagose a compromise or assist in the investigation",
+                "markdown": "**Misconfiguration AVD-AWS-0133**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|LOW|Enable Performance Insights to detect potential problems|Instance does not have performance insights enabled.|[AVD-AWS-0133](https://avd.aquasec.com/misconfig/avd-aws-0133)|\n\nEnabling Performance insights allows for greater depth in monitoring data.\n\t\t\nFor example, information about active sessions could help diagose a compromise or assist in the investigation"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "2.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
+              "id": "N/A",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "RDS Deletion Protection Disabled"
+              },
+              "fullDescription": {
+                "text": "Ensure deletion protection is enabled for RDS database instances."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/n/a",
+              "help": {
+                "text": "Misconfiguration N/A\nType: Terraform Security Check\nSeverity: MEDIUM\nCheck: RDS Deletion Protection Disabled\nMessage: Instance does not have Deletion Protection enabled\nLink: [N/A](https://avd.aquasec.com/misconfig/n/a)\nEnsure deletion protection is enabled for RDS database instances.",
+                "markdown": "**Misconfiguration N/A**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|MEDIUM|RDS Deletion Protection Disabled|Instance does not have Deletion Protection enabled|[N/A](https://avd.aquasec.com/misconfig/n/a)|\n\nEnsure deletion protection is enabled for RDS database instances."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0086",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 Access block should block public ACL"
+              },
+              "fullDescription": {
+                "text": "\nS3 buckets should block public ACLs on buckets and any objects they contain. By blocking, PUTs with fail if the object has any public ACL a.\n"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0086",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0086\nType: Terraform Security Check\nSeverity: HIGH\nCheck: S3 Access block should block public ACL\nMessage: No public access block so not blocking public acls\nLink: [AVD-AWS-0086](https://avd.aquasec.com/misconfig/avd-aws-0086)\n\nS3 buckets should block public ACLs on buckets and any objects they contain. By blocking, PUTs with fail if the object has any public ACL a.\n",
+                "markdown": "**Misconfiguration AVD-AWS-0086**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|HIGH|S3 Access block should block public ACL|No public access block so not blocking public acls|[AVD-AWS-0086](https://avd.aquasec.com/misconfig/avd-aws-0086)|\n\n\nS3 buckets should block public ACLs on buckets and any objects they contain. By blocking, PUTs with fail if the object has any public ACL a.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0087",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 Access block should block public policy"
+              },
+              "fullDescription": {
+                "text": "\nS3 bucket policy should have block public policy to prevent users from putting a policy that enable public access.\n"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0087",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0087\nType: Terraform Security Check\nSeverity: HIGH\nCheck: S3 Access block should block public policy\nMessage: No public access block so not blocking public policies\nLink: [AVD-AWS-0087](https://avd.aquasec.com/misconfig/avd-aws-0087)\n\nS3 bucket policy should have block public policy to prevent users from putting a policy that enable public access.\n",
+                "markdown": "**Misconfiguration AVD-AWS-0087**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|HIGH|S3 Access block should block public policy|No public access block so not blocking public policies|[AVD-AWS-0087](https://avd.aquasec.com/misconfig/avd-aws-0087)|\n\n\nS3 bucket policy should have block public policy to prevent users from putting a policy that enable public access.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0089",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 Bucket does not have logging enabled."
+              },
+              "fullDescription": {
+                "text": "Buckets should have logging enabled so that access can be audited."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0089",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0089\nType: Terraform Security Check\nSeverity: MEDIUM\nCheck: S3 Bucket does not have logging enabled.\nMessage: Bucket does not have logging enabled\nLink: [AVD-AWS-0089](https://avd.aquasec.com/misconfig/avd-aws-0089)\nBuckets should have logging enabled so that access can be audited.",
+                "markdown": "**Misconfiguration AVD-AWS-0089**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|MEDIUM|S3 Bucket does not have logging enabled.|Bucket does not have logging enabled|[AVD-AWS-0089](https://avd.aquasec.com/misconfig/avd-aws-0089)|\n\nBuckets should have logging enabled so that access can be audited."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0090",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 Data should be versioned"
+              },
+              "fullDescription": {
+                "text": "\nVersioning in Amazon S3 is a means of keeping multiple variants of an object in the same bucket. \nYou can use the S3 Versioning feature to preserve, retrieve, and restore every version of every object stored in your buckets. \nWith versioning you can recover more easily from both unintended user actions and application failures.\n"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0090",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0090\nType: Terraform Security Check\nSeverity: MEDIUM\nCheck: S3 Data should be versioned\nMessage: Bucket does not have versioning enabled\nLink: [AVD-AWS-0090](https://avd.aquasec.com/misconfig/avd-aws-0090)\n\nVersioning in Amazon S3 is a means of keeping multiple variants of an object in the same bucket. \nYou can use the S3 Versioning feature to preserve, retrieve, and restore every version of every object stored in your buckets. \nWith versioning you can recover more easily from both unintended user actions and application failures.\n",
+                "markdown": "**Misconfiguration AVD-AWS-0090**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|MEDIUM|S3 Data should be versioned|Bucket does not have versioning enabled|[AVD-AWS-0090](https://avd.aquasec.com/misconfig/avd-aws-0090)|\n\n\nVersioning in Amazon S3 is a means of keeping multiple variants of an object in the same bucket. \nYou can use the S3 Versioning feature to preserve, retrieve, and restore every version of every object stored in your buckets. \nWith versioning you can recover more easily from both unintended user actions and application failures.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0091",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 Access Block should Ignore Public Acl"
+              },
+              "fullDescription": {
+                "text": "\nS3 buckets should ignore public ACLs on buckets and any objects they contain. By ignoring rather than blocking, PUT calls with public ACLs will still be applied but the ACL will be ignored.\n"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0091",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0091\nType: Terraform Security Check\nSeverity: HIGH\nCheck: S3 Access Block should Ignore Public Acl\nMessage: No public access block so not ignoring public acls\nLink: [AVD-AWS-0091](https://avd.aquasec.com/misconfig/avd-aws-0091)\n\nS3 buckets should ignore public ACLs on buckets and any objects they contain. By ignoring rather than blocking, PUT calls with public ACLs will still be applied but the ACL will be ignored.\n",
+                "markdown": "**Misconfiguration AVD-AWS-0091**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|HIGH|S3 Access Block should Ignore Public Acl|No public access block so not ignoring public acls|[AVD-AWS-0091](https://avd.aquasec.com/misconfig/avd-aws-0091)|\n\n\nS3 buckets should ignore public ACLs on buckets and any objects they contain. By ignoring rather than blocking, PUT calls with public ACLs will still be applied but the ACL will be ignored.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0093",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 Access block should restrict public bucket to limit access"
+              },
+              "fullDescription": {
+                "text": "S3 buckets should restrict public policies for the bucket. By enabling, the restrict_public_buckets, only the bucket owner and AWS Services can access if it has a public policy."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0093",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0093\nType: Terraform Security Check\nSeverity: HIGH\nCheck: S3 Access block should restrict public bucket to limit access\nMessage: No public access block so not restricting public buckets\nLink: [AVD-AWS-0093](https://avd.aquasec.com/misconfig/avd-aws-0093)\nS3 buckets should restrict public policies for the bucket. By enabling, the restrict_public_buckets, only the bucket owner and AWS Services can access if it has a public policy.",
+                "markdown": "**Misconfiguration AVD-AWS-0093**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|HIGH|S3 Access block should restrict public bucket to limit access|No public access block so not restricting public buckets|[AVD-AWS-0093](https://avd.aquasec.com/misconfig/avd-aws-0093)|\n\nS3 buckets should restrict public policies for the bucket. By enabling, the restrict_public_buckets, only the bucket owner and AWS Services can access if it has a public policy."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0094",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 buckets should each define an aws_s3_bucket_public_access_block"
+              },
+              "fullDescription": {
+                "text": "The \u0026#34;block public access\u0026#34; settings in S3 override individual policies that apply to a given bucket, meaning that all public access can be controlled in one central types for that bucket. It is therefore good practice to define these settings for each bucket in order to clearly define the public access that can be allowed for it."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0094",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0094\nType: Terraform Security Check\nSeverity: LOW\nCheck: S3 buckets should each define an aws_s3_bucket_public_access_block\nMessage: Bucket does not have a corresponding public access block.\nLink: [AVD-AWS-0094](https://avd.aquasec.com/misconfig/avd-aws-0094)\nThe \"block public access\" settings in S3 override individual policies that apply to a given bucket, meaning that all public access can be controlled in one central types for that bucket. It is therefore good practice to define these settings for each bucket in order to clearly define the public access that can be allowed for it.",
+                "markdown": "**Misconfiguration AVD-AWS-0094**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|LOW|S3 buckets should each define an aws_s3_bucket_public_access_block|Bucket does not have a corresponding public access block.|[AVD-AWS-0094](https://avd.aquasec.com/misconfig/avd-aws-0094)|\n\nThe \"block public access\" settings in S3 override individual policies that apply to a given bucket, meaning that all public access can be controlled in one central types for that bucket. It is therefore good practice to define these settings for each bucket in order to clearly define the public access that can be allowed for it."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "2.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
+              "id": "AVD-AWS-0132",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "S3 encryption should use Customer Managed Keys"
+              },
+              "fullDescription": {
+                "text": "Encryption using AWS keys provides protection for your S3 buckets. To increase control of the encryption and manage factors like rotation use customer managed keys."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/avd-aws-0132",
+              "help": {
+                "text": "Misconfiguration AVD-AWS-0132\nType: Terraform Security Check\nSeverity: HIGH\nCheck: S3 encryption should use Customer Managed Keys\nMessage: Bucket does not encrypt data with a customer managed key.\nLink: [AVD-AWS-0132](https://avd.aquasec.com/misconfig/avd-aws-0132)\nEncryption using AWS keys provides protection for your S3 buckets. To increase control of the encryption and manage factors like rotation use customer managed keys.",
+                "markdown": "**Misconfiguration AVD-AWS-0132**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|HIGH|S3 encryption should use Customer Managed Keys|Bucket does not encrypt data with a customer managed key.|[AVD-AWS-0132](https://avd.aquasec.com/misconfig/avd-aws-0132)|\n\nEncryption using AWS keys provides protection for your S3 buckets. To increase control of the encryption and manage factors like rotation use customer managed keys."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            }
+          ],
+          "version": "0.34.0"
         }
       },
       "results": [
         {
-          "ruleId": "TUT1001",
+          "ruleId": "AVD-AWS-0077",
+          "ruleIndex": 0,
+          "level": "warning",
           "message": {
-            "text": "Use of uninitialized variable."
+            "text": "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf\nType: terraform\nVulnerability AVD-AWS-0077\nSeverity: MEDIUM\nMessage: Instance has very low backup retention period.\nLink: [AVD-AWS-0077](https://avd.aquasec.com/misconfig/avd-aws-0077)"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "collections/list.h"
+                  "uri": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf",
+                  "uriBaseId": "ROOTPATH"
                 },
                 "region": {
-                  "startLine": 25,
-                  "startColumn": 8,
-                  "snippet": {
-                    "text": "add_core(ptr, offset, val)"
-                  }
+                  "startLine": 83,
+                  "startColumn": 1,
+                  "endLine": 83,
+                  "endColumn": 1
                 }
+              },
+              "message": {
+                "text": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
               }
             }
-          ],
-          "codeFlows": [
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0080",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf\nType: terraform\nVulnerability AVD-AWS-0080\nSeverity: HIGH\nMessage: Instance does not have storage encryption enabled.\nLink: [AVD-AWS-0080](https://avd.aquasec.com/misconfig/avd-aws-0080)"
+          },
+          "locations": [
             {
-              "message": {
-                "text": "Path from declaration to usage."
-              },
-              "threadFlows": [
-                {
-                  "locations": [
-                    {
-                      "importance": "essential",
-                      "location": {
-                        "message": {
-                          "text": "Variable 'ptr' declared."
-                        },
-                        "physicalLocation": {
-                          "artifactLocation": {
-                            "uri": "collections/list.h"
-                          },
-                          "region": {
-                            "startLine": 15,
-                            "startColumn": 8,
-                            "snippet": {
-                              "text": "int* ptr;"
-                            }                          }
-                        },
-                        "logicalLocations": [
-                          {
-                            "fullyQualifiedName": "collections::list::add"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "importance": "unimportant",
-                      "location": {
-                        "physicalLocation": {
-                          "artifactLocation": {
-                            "uri": "collections/list.h"
-                          },
-                          "region": {
-                            "startLine": 18,
-                            "startColumn": 8,
-                            "snippet": {
-                              "text": "offset = 0;"
-                            }
-                          }
-                        },
-                        "logicalLocations": [
-                          {
-                            "fullyQualifiedName": "collections::list::add"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "importance": "essential",
-                      "location": {
-                        "message": {
-                          "text": "Uninitialized variable 'ptr' passed to method 'add_core'."
-                        },
-                        "physicalLocation": {
-                          "artifactLocation": {
-                            "uri": "collections/list.h"
-                          },
-                          "region": {
-                            "startLine": 25,
-                            "startColumn": 8,
-                            "snippet": {
-                              "text": "add_core(ptr, offset, val)"
-                            }
-                          }
-                        },
-                        "logicalLocations": [
-                          {
-                            "fullyQualifiedName": "collections::list::add"
-                          }
-                        ]
-                      }
-                    }
-                  ]
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 49,
+                  "startColumn": 1,
+                  "endLine": 49,
+                  "endColumn": 1
                 }
-              ]
-            },
+              },
+              "message": {
+                "text": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0133",
+          "ruleIndex": 2,
+          "level": "note",
+          "message": {
+            "text": "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf\nType: terraform\nVulnerability AVD-AWS-0133\nSeverity: LOW\nMessage: Instance does not have performance insights enabled.\nLink: [AVD-AWS-0133](https://avd.aquasec.com/misconfig/avd-aws-0133)"
+          },
+          "locations": [
             {
-              "message": {
-                "text": "Alternate path from declaration to usage."
-              },
-              "threadFlows": [
-                {
-                  "locations": [
-                    {
-                      "importance": "essential",
-                      "location": {
-                        "message": {
-                          "text": "Variable 'ptr' declared."
-                        },
-                        "physicalLocation": {
-                          "artifactLocation": {
-                            "uri": "collections/list.h"
-                          },
-                          "region": {
-                            "startLine": 15,
-                            "startColumn": 8,
-                            "snippet": {
-                              "text": "int* ptr;"
-                            }                          }
-                        },
-                        "logicalLocations": [
-                          {
-                            "fullyQualifiedName": "collections::list::add"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "importance": "unimportant",
-                      "location": {
-                        "physicalLocation": {
-                          "artifactLocation": {
-                            "uri": "collections/list.h"
-                          },
-                          "region": {
-                            "startLine": 22,
-                            "startColumn": 8,
-                            "snippet": {
-                              "text": "val = 0;"
-                            }
-                          }
-                        },
-                        "logicalLocations": [
-                          {
-                            "fullyQualifiedName": "collections::list::add"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "importance": "essential",
-                      "location": {
-                        "message": {
-                          "text": "Uninitialized variable 'ptr' passed to method 'add_core'."
-                        },
-                        "physicalLocation": {
-                          "artifactLocation": {
-                            "uri": "collections/list.h"
-                          },
-                          "region": {
-                            "startLine": 25,
-                            "startColumn": 8,
-                            "snippet": {
-                              "text": "add_core(ptr, offset, val)"
-                            }
-                          }
-                        },
-                        "logicalLocations": [
-                          {
-                            "fullyQualifiedName": "collections::list::add"
-                          }
-                        ]
-                      }
-                    }
-                  ]
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 39,
+                  "startColumn": 1,
+                  "endLine": 104,
+                  "endColumn": 1
                 }
-              ]
-            }          ]
+              },
+              "message": {
+                "text": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "N/A",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf\nType: terraform\nVulnerability N/A\nSeverity: MEDIUM\nMessage: Instance does not have IAM Authentication enabled\nLink: [N/A](https://avd.aquasec.com/misconfig/n/a)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 57,
+                  "startColumn": 1,
+                  "endLine": 57,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "N/A",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf\nType: terraform\nVulnerability N/A\nSeverity: MEDIUM\nMessage: Instance does not have Deletion Protection enabled\nLink: [N/A](https://avd.aquasec.com/misconfig/n/a)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 90,
+                  "startColumn": 1,
+                  "endLine": 90,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0086",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0086\nSeverity: HIGH\nMessage: No public access block so not blocking public acls\nLink: [AVD-AWS-0086](https://avd.aquasec.com/misconfig/avd-aws-0086)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0087",
+          "ruleIndex": 5,
+          "level": "error",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0087\nSeverity: HIGH\nMessage: No public access block so not blocking public policies\nLink: [AVD-AWS-0087](https://avd.aquasec.com/misconfig/avd-aws-0087)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0089",
+          "ruleIndex": 6,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0089\nSeverity: MEDIUM\nMessage: Bucket does not have logging enabled\nLink: [AVD-AWS-0089](https://avd.aquasec.com/misconfig/avd-aws-0089)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0090",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0090\nSeverity: MEDIUM\nMessage: Bucket does not have versioning enabled\nLink: [AVD-AWS-0090](https://avd.aquasec.com/misconfig/avd-aws-0090)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0091",
+          "ruleIndex": 8,
+          "level": "error",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0091\nSeverity: HIGH\nMessage: No public access block so not ignoring public acls\nLink: [AVD-AWS-0091](https://avd.aquasec.com/misconfig/avd-aws-0091)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0093",
+          "ruleIndex": 9,
+          "level": "error",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0093\nSeverity: HIGH\nMessage: No public access block so not restricting public buckets\nLink: [AVD-AWS-0093](https://avd.aquasec.com/misconfig/avd-aws-0093)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0094",
+          "ruleIndex": 10,
+          "level": "note",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0094\nSeverity: LOW\nMessage: Bucket does not have a corresponding public access block.\nLink: [AVD-AWS-0094](https://avd.aquasec.com/misconfig/avd-aws-0094)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AVD-AWS-0132",
+          "ruleIndex": 11,
+          "level": "error",
+          "message": {
+            "text": "Artifact: modules/acme_bucket/main.tf\nType: terraform\nVulnerability AVD-AWS-0132\nSeverity: HIGH\nMessage: Bucket does not encrypt data with a customer managed key.\nLink: [AVD-AWS-0132](https://avd.aquasec.com/misconfig/avd-aws-0132)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/acme_bucket/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/acme_bucket/main.tf"
+              }
+            }
+          ]
         }
       ],
-      "columnKind": "utf16CodeUnits"
+      "columnKind": "utf16CodeUnits",
+      "originalUriBaseIds": {
+        "ROOTPATH": {
+          "uri": "file:///"
+        }
+      }
     }
   ]
 }

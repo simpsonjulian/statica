@@ -23,7 +23,7 @@ RSpec.describe 'HtmlReport' do
     it 'handles a directory of one or more sarif files' do
       report = HtmlReport.new("spec", nil)
       report.generate
-      expect(report.results.first.description).to eq "Use of uninitialized variable."
+      expect(report.results.first.description.split("\n")[0]).to match "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
     end
 
     it 'publishes a simple html report' do
@@ -35,7 +35,7 @@ RSpec.describe 'HtmlReport' do
     it 'publishes a more complicated html report' do
       report = HtmlReport.new("spec/complex.sarif", "complex.html")
       report.generate.publish
-      expect(File.read("complex.html")).to match "Use of uninitialized variable"
+      expect(File.read("complex.html")).to match "Instance does not have Deletion Protection enabled"
     end
 
   end
