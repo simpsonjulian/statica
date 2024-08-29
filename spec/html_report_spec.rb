@@ -15,7 +15,7 @@ RSpec.describe 'HtmlReport' do
 
   context 'running the app' do
     it 'handles a single sarif file' do
-      report = HtmlReport.new("spec/sample.sarif", nil)
+      report = HtmlReport.new("spec/simple.sarif", nil)
       report.generate
       expect(report.results.first.description).to eq "'x' is assigned a value but never used."
     end
@@ -23,13 +23,19 @@ RSpec.describe 'HtmlReport' do
     it 'handles a directory of one or more sarif files' do
       report = HtmlReport.new("spec", nil)
       report.generate
-      expect(report.results.first.severity).to eq "error"
+      expect(report.results.first.description).to eq "Use of uninitialized variable."
     end
 
-    it 'publishes an html report' do
-      report = HtmlReport.new("spec", "foo.html")
+    it 'publishes a simple html report' do
+      report = HtmlReport.new("spec/simple.sarif", "simple.html")
       report.generate.publish
-      expect(File.read("foo.html")).to match "'x' is assigned a value but never used."
+      expect(File.read("simple.html")).to match "'x' is assigned a value but never used."
+    end
+
+    it 'publishes a more complicated html report' do
+      report = HtmlReport.new("spec/complex.sarif", "complex.html")
+      report.generate.publish
+      expect(File.read("complex.html")).to match "Use of uninitialized variable"
     end
 
   end
@@ -38,7 +44,7 @@ end
 RSpec.describe 'SarifReport' do
   context 'parsing sarif files' do
 
-    sarif_file = SarifFile.new("spec/sample.sarif")
+    sarif_file = SarifFile.new("spec/simple.sarif")
 
     it 'has a severity' do
       expect(sarif_file.results.first.severity).to eq "error"
@@ -50,7 +56,7 @@ RSpec.describe 'SarifReport' do
     end
 
     it 'has a filename' do
-      expect(sarif_file.results.first.filename).to eq "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js"
+      expect(sarif_file.results.first.file_url).to eq "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js"
     end
 
     it 'has a line number' do

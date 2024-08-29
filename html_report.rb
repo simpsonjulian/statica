@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 #
-require "json"
-require "ostruct"
+require 'json'
+require 'ostruct'
+require 'erb'
 
 class SarifFile
   def initialize(path)
@@ -11,11 +12,11 @@ class SarifFile
   def results
     output = []
     @report.each do |report|
-      output += report.runs[0].results.map { |result| OpenStruct.new({ severity: result.level,
-                                                                       description: result.message.text,
-                                                                       filename: result.locations[0].physicalLocation.artifactLocation.uri,
-                                                                       linenum: result.locations[0].physicalLocation.region.startLine,
-                                                                       file_url: result.locations[0].physicalLocation.artifactLocation.uri }) }
+      output += report.runs[0].results.map { |result| 
+                  OpenStruct.new({ severity: result.level,
+                                       description: result.message.text,
+                                       linenum: result.locations[0].physicalLocation.region.startLine,
+                                       file_url: result.locations[0].physicalLocation.artifactLocation.uri }) }
 
     end
     output
@@ -25,7 +26,7 @@ class SarifFile
 
   def get_sarifs(path)
     if File.directory?(path)
-      Dir.glob(path + "/*.sarif").map { |sarif| JSON.parse(File.read(sarif), object_class: OpenStruct) }
+      Dir.glob("#{path}/*.sarif").map { |sarif| JSON.parse(File.read(sarif), object_class: OpenStruct) }
     else
       [JSON.parse(File.read(path), object_class: OpenStruct)]
     end
@@ -52,13 +53,13 @@ class HtmlReport
 
   def publish
     # generate erb template and write to the file from destination_path
-    File.open(@dest_path, "w") do |file|
+    File.open(@dest_path, 'w') do |file|
       file.write(ERB.new(self.class.template).result(binding))
     end
   end
 
   def self.template
-    File.read(File.dirname(__FILE__) + "/template.erb")
+    File.read("#{File.dirname(__FILE__)}/template.erb")
   end
 end
 
