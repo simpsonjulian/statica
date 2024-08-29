@@ -28,7 +28,7 @@ if [ -z "${args}" ]; then
 elif [ "$args" == "html" ]; then
   echo "HTML report at:"
   html_report="${source}/statica.html"
-  sarif html -o "${html_report}" "${tmpdir}"/*.sarif
+  ./html_report.rb "${tmpdir}" "${html_report}"
   echo "${html_report}"
 fi
 

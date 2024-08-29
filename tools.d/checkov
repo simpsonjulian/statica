@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -euo pipefail
+which -s checkov || exit 1
+
+source=$1
+
+out=$(mktemp -d)
+checkov --quiet -d "${source}" -o sarif --output-file-path "${out}/checkov.sarif" 1>&2
+cat "${out}/checkov.sarif"
+rm -rf "${out}"

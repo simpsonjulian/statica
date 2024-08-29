@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Findings Report</title>
+  <style>
+      body {
+          font-family: 'Helvetica', 'Arial', sans-serif;
+          font-size: 16px;
+          line-height: 1.6;
+          margin: 0;
+          padding: 0;
+          background-color: #f4f4f4;
+          color: #333;
+      }
+
+      .container {
+          width: 80%;
+          margin: 20px auto;
+          background: #fff;
+          padding: 20px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+          text-align: center;
+          color: #444;
+      }
+
+      .finding {
+          margin: 10px 0;
+          padding: 10px;
+          border-bottom: 1px solid #ddd;
+      }
+
+      .finding:last-child {
+          border-bottom: none;
+      }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Findings</h1>
+
+
+  <% @severities.each do |severity| %>
+    <p class="severity"><%= severity %></p>
+    <ul>
+      <% @results.each do |finding| %>
+        <% if finding.severity == severity %>
+          <li class="finding">
+            <%= finding.description %> <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:<%= finding.linenum %>
+          </li>
+        <% end %>
+      <% end %>
+    </ul>
+  <% end %>
+
+
+</div>
+</body>
+</html>

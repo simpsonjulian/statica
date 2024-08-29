@@ -15,6 +15,7 @@ Ensure the following tools are installed and available in your `PATH`:
 
 ```bash
 brew install semgrep dependency-check trivy sarif lizard-analyzer \
+     checkov
 ```
 
 ## Usage
