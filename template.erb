@@ -38,13 +38,6 @@
           border-bottom: none;
       }
 
-      .logo {
-          display: block;
-          width: 200px;
-          height: auto;
-          margin: 0 auto 20px;
-          float: left;
-      }
 
       .severity {
           font-size: 20px;
@@ -57,15 +50,29 @@
       }
 
       .header {
-          overflow: hidden;
+          text-align: center;
+          padding: 20px;
+          margin-bottom: 20px;
+          background-color: #f4f4f4;
+          border-bottom: 1px solid #ddd;
+      }
+
+      h1 {
+          margin: 0;
+          font-size: 24px;
+          color: #444;
       }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <img src="logo.jpg" alt="Logo" class="logo">
+
     <h1>Statica AppSec Findings</h1>
+    <p><strong>Repository URL:</strong> <a href="<%= ENV['REPO_URL'] %>" target="_blank"><%= ENV['REPO_URL'] %></a></p>
+    <p><strong>Repo Branch:</strong> <%= ENV['REPO_BRANCH'] %></p>
+    <p><strong>Latest Commit SHA:</strong> <%= ENV['LATEST_COMMIT_SHA'] %></p>
+    <p><strong>Scan Date:</strong> <%= @scan_date %></p>
   </div>
 
 

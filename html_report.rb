@@ -43,6 +43,7 @@ class HtmlReport
     @dest_path = destination_path
     @severities = []
     @content = []
+    @scan_date = Time.now
   end
 
   def generate
