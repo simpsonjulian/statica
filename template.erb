@@ -37,27 +37,67 @@
       .finding:last-child {
           border-bottom: none;
       }
+
+      .logo {
+          display: block;
+          width: 200px;
+          height: auto;
+          margin: 0 auto 20px;
+          float: left;
+      }
+
+      .severity {
+          font-size: 20px;
+          font-weight: bold;
+          margin: 20px 0 10px;
+      }
+
+      .rule {
+          font-style: italic;
+      }
+
+      .header {
+          overflow: hidden;
+      }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1>Findings</h1>
+  <div class="header">
+    <img src="logo.jpg" alt="Logo" class="logo">
+    <h1>Statica AppSec Findings</h1>
+  </div>
+
 
 
   <% @severities.each do |severity| %>
-    <p class="severity"><%= severity %></p>
-    <ul>
-      <% @results.each do |finding| %>
-        <% if finding.severity == severity %>
-          <li class="finding">
-            <%= finding.description %> <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:<%= finding.linenum %>
-          </li>
-        <% end %>
-      <% end %>
-    </ul>
-  <% end %>
 
+    <p class="severity">
+      <%= severity %>
+    </p>
 
+    <% @rule_ids.each do |rule_id| %>
+
+      <% next if @results.select { |finding| finding.rule_id == rule_id and finding.severity == severity }.empty? %>
+
+      <p class="rule">
+        <%= rule_id %>
+      </p>
+
+      <ul>
+        <% @results.each do |finding| %>
+          <% if finding.severity == severity and finding.rule_id == rule_id %>
+            <li class="finding">
+              <%= finding.description %>
+              <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:
+              <%= finding.linenum %>
+            </li>
+
+          <% end %> <!-- if severity and rule_id -->
+        <% end %> <!-- results each -->
+      </ul>
+    <% end %> <!-- rule_ids each -->
+  <% end %> <!-- severities each -->
 </div>
 </body>
 </html>

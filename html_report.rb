@@ -16,7 +16,8 @@ class SarifFile
                   OpenStruct.new({ severity: result.level,
                                        description: result.message.text,
                                        linenum: result.locations[0].physicalLocation.region.startLine,
-                                       file_url: result.locations[0].physicalLocation.artifactLocation.uri }) }
+                                       file_url: result.locations[0].physicalLocation.artifactLocation.uri,
+                                       rule_id: result.ruleId}) }
 
     end
     output
@@ -48,6 +49,7 @@ class HtmlReport
     @sarif = SarifFile.new(@sarif_spec)
     @results = @sarif.results
     @severities = @results.map { |result| result.severity }.uniq
+    @rule_ids = @results.map { |result| result.rule_id }.uniq
     self
   end
 

@@ -62,6 +62,10 @@ RSpec.describe 'SarifReport' do
     it 'has a line number' do
       expect(sarif_file.results.first.linenum).to eq 1
     end
+
+    it 'has a rule ID' do
+      expect(sarif_file.results.first.rule_id).to eq "no-unused-vars"
+    end
   end
 
 end
