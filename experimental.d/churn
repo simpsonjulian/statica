@@ -1,0 +1,15 @@
+#!/bin/bash
+
+source=$1
+TOP_N_CHURNED_FILES=10
+which -s git || exit 1
+
+git -C "${source}" log --format=format: --name-only --since=12.month \
+ | egrep -v '^$' \
+ | sort \
+ | uniq -c \
+ | sort -nr \
+ | head -${TOP_N_CHURNED_FILES} \
+ | awk '{print $2, $1}'
+
+ #TODO: make Sarif

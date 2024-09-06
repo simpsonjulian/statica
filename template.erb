@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Findings Report</title>
   <style>
+      .warning {
+          color: #f39c12;
+      }
+
+      .warning::after {
+          content: "⚠️";
+      }
+
       body {
           font-family: 'Helvetica', 'Arial', sans-serif;
           font-size: 16px;
@@ -45,10 +53,6 @@
           margin: 20px 0 10px;
       }
 
-      .rule {
-          font-style: italic;
-      }
-
       .header {
           text-align: center;
           padding: 20px;
@@ -79,32 +83,27 @@
 
   <% @severities.each do |severity| %>
 
-    <p class="severity">
+    <p class="severity <%= severity %>">
       <%= severity %>
     </p>
 
-    <% @rule_ids.each do |rule_id| %>
+   ## each rule
+    <% @results.select { |result| result.severity == severity }.each do |finding| %>
 
-      <% next if @results.select { |finding| finding.rule_id == rule_id and finding.severity == severity }.empty? %>
 
-      <p class="rule">
-        <%= rule_id %>
-      </p>
+      <div class="finding">
+        <p><%= finding.description %> (<%= finding.rule_id %>)</p>
+        <ul>
+          <li>
+            <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>: <%= finding.linenum %>
+          </li>
+        </ul>
+      </div>
 
-      <ul>
-        <% @results.each do |finding| %>
-          <% if finding.severity == severity and finding.rule_id == rule_id %>
-            <li class="finding">
-              <%= finding.description %>
-              <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:
-              <%= finding.linenum %>
-            </li>
+    <% end %>
 
-          <% end %> <!-- if severity and rule_id -->
-        <% end %> <!-- results each -->
-      </ul>
-    <% end %> <!-- rule_ids each -->
-  <% end %> <!-- severities each -->
+
+  <% end %>
 </div>
 </body>
 </html>
