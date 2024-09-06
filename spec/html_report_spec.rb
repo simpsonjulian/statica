@@ -38,6 +38,12 @@ RSpec.describe 'HtmlReport' do
       expect(File.read("complex.html")).to match "Instance does not have Deletion Protection enabled"
     end
 
+    it 'has helper methods for the template' do
+      report = HtmlReport.new("spec/complex.sarif", "complex.html")
+      report.generate
+      expect(report.rules_and_descriptions("warning")["AVD-AWS-0077"].split("\n")[0]).to match "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
+    end
+
   end
 end
 

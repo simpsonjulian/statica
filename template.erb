@@ -13,6 +13,22 @@
           content: "⚠️";
       }
 
+      .error {
+          color: #e74c3c;
+      }
+
+      .error::after {
+          content: "❌";
+      }
+
+      .note {
+          color: #3498db;
+      }
+
+      .note::after {
+          content: "📝";
+      }
+
       body {
           font-family: 'Helvetica', 'Arial', sans-serif;
           font-size: 16px;
@@ -72,6 +88,7 @@
 <div class="container">
   <div class="header">
 
+
     <h1>Statica AppSec Findings</h1>
     <p><strong>Repository URL:</strong> <a href="<%= ENV['REPO_URL'] %>" target="_blank"><%= ENV['REPO_URL'] %></a></p>
     <p><strong>Repo Branch:</strong> <%= ENV['REPO_BRANCH'] %></p>
@@ -81,25 +98,25 @@
 
 
 
-  <% @severities.each do |severity| %>
+  <% severities.each do |severity|%>
 
     <p class="severity <%= severity %>">
       <%= severity %>
     </p>
 
-   ## each rule
-    <% @results.select { |result| result.severity == severity }.each do |finding| %>
+    <% rules_and_descriptions(severity).each_pair do |rule_id, desc| %>
 
 
-      <div class="finding">
-        <p><%= finding.description %> (<%= finding.rule_id %>)</p>
-        <ul>
+      <b><%= rule_id %></b>: <%= desc %>
+      <ul>
+        <% results_matching(severity, rule_id).each do |finding| %>
+
           <li>
-            <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>: <%= finding.linenum %>
+            <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:<%= finding.linenum %>
           </li>
-        </ul>
-      </div>
 
+        <% end %>
+      </ul>
     <% end %>
 
 
