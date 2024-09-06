@@ -29,6 +29,10 @@
           content: "📝";
       }
 
+      .collapsible:hover {
+          background-color: #ddd;
+      }
+
       body {
           font-family: 'Helvetica', 'Arial', sans-serif;
           font-size: 16px;
@@ -98,7 +102,7 @@
 
 
 
-  <% severities.each do |severity|%>
+  <% severities.each do |severity| %>
 
     <p class="severity <%= severity %>">
       <%= severity %>
@@ -107,14 +111,12 @@
     <% rules_and_descriptions(severity).each_pair do |rule_id, desc| %>
 
 
-      <b><%= rule_id %></b>: <%= desc %>
+      <p class="collapsible active"> <b><%= rule_id %></b>: <%= desc %></p>
       <ul>
         <% results_matching(severity, rule_id).each do |finding| %>
-
           <li>
             <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:<%= finding.linenum %>
           </li>
-
         <% end %>
       </ul>
     <% end %>
@@ -122,5 +124,23 @@
 
   <% end %>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var coll = document.getElementsByClassName("collapsible");
+        for (var i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        }
+    });
+</script>
+
 </body>
 </html>
