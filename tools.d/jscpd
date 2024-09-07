@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# pre flight checks
 set -euo pipefail
 which -s jscpd || exit 1
 npm ls -g | grep -q jscpd-sarif-reporter || exit 1

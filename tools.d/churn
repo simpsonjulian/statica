@@ -1,10 +1,13 @@
 #!/bin/bash
 
+set -euo pipefail
+which -s git || exit 1
+
 source=$1
 tmpdir=$(mktemp -d)
-OUTPUT="${tmpdir}"/churned
+OUTPUT="${tmpdir}/churned"
 TOP_N_CHURNED_FILES=10
-which -s git || exit 1
+
 
 git -C "${source}" log --format=format: --name-only --since=12.month \
  | egrep -v '^$' \
@@ -14,10 +17,11 @@ git -C "${source}" log --format=format: --name-only --since=12.month \
  | head -${TOP_N_CHURNED_FILES} \
  | awk '{print $2, $1}' > "${OUTPUT}"
 
-# output to JSON
+[ -s $OUTPUT ] || exit 0
+
 while read -r filename _commits; do
 
-  cat <<-EOF >> "${tmpdir}"/findings.json
+  cat <<-EOF >> "${tmpdir}/findings.json"
   {
       "ruleId": "top-file-churns",
       "level": "note",
@@ -39,7 +43,8 @@ while read -r filename _commits; do
   },
 	EOF
 done < "${OUTPUT}"
-
+ls $tmpdir
+cat "${tmpdir}/findings.json"
 cat <<-EOF
   {
       "version": "2.1.0",
@@ -52,7 +57,7 @@ cat <<-EOF
                       "rules": []
                   }
               },
-              "results": [$(sed '$ s/,$//' "${tmpdir}"/findings.json)]
+              "results": [$(sed '$ s/,$//' "${tmpdir}/findings.json")]
           }
       ]
   }
