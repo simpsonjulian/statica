@@ -1,6 +1,6 @@
 # Statica
 
-Statica is a tool (for macOS and Linux) that scans a given source directory for quality and security issues. It can also generate an HTML summary of the reports.
+Statica is a code quality and security scanning tool (for macOS and Linux). Statica can show output on CLI or generate an HTML report.
 
 Statica is intended for situations where you can't compile the code, like:
 
@@ -8,15 +8,20 @@ Statica is intended for situations where you can't compile the code, like:
 * if there are binary dependencies you can't access
 * if the code doesn't compile
 
-
 ## Prerequisites
 
 Ensure the following tools are installed and available in your `PATH`:
 
 ```bash
-brew install semgrep dependency-check trivy sarif lizard-analyzer \
-     checkov
+brew install semgrep \
+    dependency-check \
+    trivy \
+    sarif \
+    lizard-analyzer \
+    checkov
 ```
+
+You'll also want Ruby 3.0.0 or later installed to do the HTML.
 
 ## Usage
 
