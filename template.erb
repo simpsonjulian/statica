@@ -56,17 +56,6 @@
           color: #444;
       }
 
-      .finding {
-          margin: 10px 0;
-          padding: 10px;
-          border-bottom: 1px solid #ddd;
-      }
-
-      .finding:last-child {
-          border-bottom: none;
-      }
-
-
       .severity {
           font-size: 20px;
           font-weight: bold;
@@ -127,11 +116,11 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        var coll = document.getElementsByClassName("collapsible");
-        for (var i = 0; i < coll.length; i++) {
+        let coll = document.getElementsByClassName("collapsible");
+        for (let i = 0; i < coll.length; i++) {
             coll[i].addEventListener("click", function () {
                 this.classList.toggle("active");
-                var content = this.nextElementSibling;
+                let content = this.nextElementSibling;
                 if (content.style.display === "block") {
                     content.style.display = "none";
                 } else {

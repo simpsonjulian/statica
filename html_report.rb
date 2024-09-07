@@ -5,6 +5,7 @@ require 'json'
 require 'ostruct'
 require 'erb'
 
+# loads and represents one of more SARIF files
 class SarifFile
   def initialize(path)
     @report = get_sarifs(path)
@@ -15,17 +16,21 @@ class SarifFile
     @report.each do |report|
       output += report.runs[0].results.map do |result|
         region = result.locations[0].physicalLocation.region
-        OpenStruct.new({ severity: result.level,
-                         description: result.message.text,
-                         linenum: region ? region.startLine : 0,
-                         file_url: result.locations[0].physicalLocation.artifactLocation.uri,
-                         rule_id: result.ruleId })
+        result(region, result)
       end
     end
     output
   end
 
   private
+
+  def result(region, result)
+    OpenStruct.new({ severity: result.level,
+                     description: result.message.text,
+                     linenum: region ? region.startLine : 0,
+                     file_url: result.locations[0].physicalLocation.artifactLocation.uri,
+                     rule_id: result.ruleId })
+  end
 
   def get_sarifs(path)
     if File.directory?(path)
@@ -36,6 +41,7 @@ class SarifFile
   end
 end
 
+# renders sarif findings into HTML and writes to disk
 class HtmlReport
   attr_reader :results
 
@@ -51,12 +57,22 @@ class HtmlReport
     @sarif = SarifFile.new(@sarif_spec)
     @results = @sarif.results
     @severities = @results.map(&:severity).uniq
-
     self
   end
 
   def severities
-    ['error', 'warning', 'note', 'none']
+    %w[error warning note]
+  end
+
+  # jscpd has a single rule, which can spam the result page.
+  # should probably fix this in `tools.d/jscpd`
+  def cope_with_jscpd(result)
+    description = result.description
+    rule_id = result.rule_id
+    language = nil
+    description.match(/Clone detected in (\w+)/) { |m| language = m[1] }
+    final_rule_id = rule_id == 'duplication' ? "duplication.#{language}" : rule_id
+    [description, final_rule_id]
   end
 
   def results_matching(severity, rule_id)
@@ -67,10 +83,10 @@ class HtmlReport
   end
 
   def rules_and_descriptions(severity)
-    @results.select{|e| e.severity == severity}.map do |result|
+    @results.select { |e| e.severity == severity }.map do |result|
       description, final_rule_id = cope_with_jscpd(result)
 
-      [final_rule_id, description ]
+      [final_rule_id, description]
     end.uniq.to_h
   end
 
@@ -84,17 +100,6 @@ class HtmlReport
 
   def self.template
     File.read("#{File.dirname(__FILE__)}/template.erb")
-  end
-
-  private
-
-  def cope_with_jscpd(result)
-    description = result.description
-    rule_id = result.rule_id
-    language = nil
-    description.match(/Clone detected in (\w+)/) { |m| language = m[1] }
-    final_rule_id = rule_id == 'duplication' ? "duplication.#{language}" : rule_id
-    return description, final_rule_id
   end
 end
 

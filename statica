@@ -7,6 +7,9 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
+REPO_URL=''
+REPO_BRANCH=''
+LATEST_COMMIT_SHA=''
 
 source=$1
 args=${2:-""}
@@ -20,7 +23,7 @@ for scanner in tools.d/*; do
   bash "$scanner" "$source" > "${report}" || rm -f "${report}"
 done
 echo "Scanning complete.  Reports found:"
-ls ${tmpdir}
+ls "${tmpdir}"
 
 if [ -z "${args}" ]; then
   echo "Summary:"
@@ -29,9 +32,11 @@ elif [ "$args" == "html" ]; then
   echo "HTML report at:"
 
   html_report="${source}/statica.html"
-  export REPO_URL=$(cd ${source} && git config --get remote.origin.url)
-  export REPO_BRANCH=$(cd ${source} && git rev-parse --abbrev-ref HEAD)
-  export LATEST_COMMIT_SHA=$(cd ${source} && git rev-parse --short HEAD )
+  REPO_URL=$(cd "${source}" && git config --get remote.origin.url)
+  REPO_BRANCH=$(cd "${source}" && git rev-parse --abbrev-ref HEAD)
+  LATEST_COMMIT_SHA=$(cd "${source}" && git rev-parse --short HEAD )
+
+  export REPO_URL REPO_BRANCH LATEST_COMMIT_SHA
 
   ./html_report.rb "${tmpdir}" "${html_report}"
   echo "${html_report}"
