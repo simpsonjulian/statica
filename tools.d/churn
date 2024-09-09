@@ -1,27 +1,27 @@
 #!/bin/bash
 
-set -euo pipefail
+#set -euo pipefail
 which -s git || exit 1
 
 source=$1
 tmpdir=$(mktemp -d)
 OUTPUT="${tmpdir}/churned"
 TOP_N_CHURNED_FILES=10
-
+findings="${tmpdir}/findings.json"
 
 git -C "${source}" log --format=format: --name-only --since=12.month \
- | egrep -v '^$' \
+ | grep -Ev '^$' \
  | sort \
  | uniq -c \
  | sort -nr \
  | head -${TOP_N_CHURNED_FILES} \
- | awk '{print $2, $1}' > "${OUTPUT}"
+ | awk '{print $2, $1}' | tee "${OUTPUT}"
 
-[ -s $OUTPUT ] || exit 0
+ wc -l "${OUTPUT}"
 
 while read -r filename _commits; do
 
-  cat <<-EOF >> "${tmpdir}/findings.json"
+  cat <<-EOF >> "${findings}"
   {
       "ruleId": "top-file-churns",
       "level": "note",
@@ -43,8 +43,10 @@ while read -r filename _commits; do
   },
 	EOF
 done < "${OUTPUT}"
-ls $tmpdir
-cat "${tmpdir}/findings.json"
+
+# remove trailing comma
+sed -ibak '$ s/,$//' "${findings}"
+
 cat <<-EOF
   {
       "version": "2.1.0",
@@ -57,7 +59,7 @@ cat <<-EOF
                       "rules": []
                   }
               },
-              "results": [$(sed '$ s/,$//' "${tmpdir}/findings.json")]
+              "results": [$(cat "${findings}")]
           }
       ]
   }

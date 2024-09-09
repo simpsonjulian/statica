@@ -4,6 +4,7 @@
 require 'json'
 require 'ostruct'
 require 'erb'
+require 'cgi/util'
 
 # loads and represents one of more SARIF files
 class SarifFile
@@ -14,10 +15,14 @@ class SarifFile
   def results
     output = []
     @report.each do |report|
-      output += report.runs[0].results.map do |result|
+      results = report.runs[0].results
+      next if results.nil?
+
+      output += results.map do |result|
         region = result.locations[0].physicalLocation.region
         result(region, result)
       end
+
     end
     output
   end
@@ -26,7 +31,7 @@ class SarifFile
 
   def result(region, result)
     OpenStruct.new({ severity: result.level,
-                     description: result.message.text,
+                     description: CGI::escapeHTML(result.message.text),
                      linenum: region ? region.startLine : 0,
                      file_url: result.locations[0].physicalLocation.artifactLocation.uri,
                      rule_id: result.ruleId })
@@ -34,8 +39,12 @@ class SarifFile
 
   def get_sarifs(path)
     if File.directory?(path)
-      Dir.glob("#{path}/*.sarif").map { |sarif| JSON.parse(File.read(sarif), object_class: OpenStruct) }
+      Dir.glob("#{path}/*.sarif").map do |sarif|
+        puts "Reading #{sarif}"
+        JSON.parse(File.read(sarif), object_class: OpenStruct)
+      end
     else
+      puts "Reading #{path}"
       [JSON.parse(File.read(path), object_class: OpenStruct)]
     end
   end

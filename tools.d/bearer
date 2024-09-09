@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -euo pipefail
+which -s bearer || exit 1
+source=$1
+
+tmpdir=$(mktemp -d)
+bearer scan --quiet -f sarif "${source}" --output "${tmpdir}/bearer.sarif" 1>&2
+cat "${tmpdir}/bearer.sarif"

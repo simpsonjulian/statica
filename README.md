@@ -18,7 +18,8 @@ brew install semgrep \
     trivy \
     sarif \
     lizard-analyzer \
-    checkov
+    checkov \
+    pmd
 ```
 
 You'll also want Ruby 3.0.0 or later installed to do the HTML.
@@ -33,3 +34,11 @@ You'll also want Ruby 3.0.0 or later installed to do the HTML.
 
 # License
 This project is licensed under the MIT License.
+
+# Future tools
+
+I'm thinking of adding:
+
+* shellcheck
+* action-lint
+* 

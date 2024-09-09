@@ -19,9 +19,10 @@ lizard -w -o "${result}" "${source}" || true
 [ -s $result ] || exit 1
 # iterate over results, and build up a JSON list of findings
 # shellcheck disable=SC2034
-awk '{print $1, $3, $5, $7}' "${result}" | while read _filename function nloc ccn ; do
-  filename=$(choose "${_filename}" 1)
-  startline=$(choose "${_filename}" 2)
+
+
+awk -F':' '{print $2,$3, $1}' "${result}"| while read -r startline severity filename ; do
+
 
   cat <<-EOF >> "${tmpdir}"/findings.json
   {
@@ -33,7 +34,7 @@ awk '{print $1, $3, $5, $7}' "${result}" | while read _filename function nloc cc
           {
               "physicalLocation": {
                   "artifactLocation": {
-                      "uri": "$filename"
+                      "uri": "${filename}"
                   },
                   "region": {
                       "startLine": ${startline}
