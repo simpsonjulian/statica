@@ -15,9 +15,7 @@ git -C "${source}" log --format=format: --name-only --since=12.month \
  | uniq -c \
  | sort -nr \
  | head -${TOP_N_CHURNED_FILES} \
- | awk '{print $2, $1}' | tee "${OUTPUT}"
-
- wc -l "${OUTPUT}"
+ | awk '{print $2, $1}' > "${OUTPUT}"
 
 while read -r filename _commits; do
 
