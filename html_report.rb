@@ -12,6 +12,40 @@ class SarifFile
     @report = get_sarifs(path)
   end
 
+  def find_severity(result, run)
+    rule_id = result.ruleId
+    tool = run.tool
+    driver = tool.driver
+
+    if result.respond_to?(:level)
+      result.level
+    elsif tool.extensions # codeql with packs
+      tool.extensions.map do |e|
+        e.rules.map do |r|
+          return r.defaultConfiguration.level if r.id == rule_id
+        end
+      end
+
+    elsif driver.rules && driver.rules.length > 0  # severity in the rule
+      rule = driver.rules.select { |r| r.id == rule_id }.first
+      rule.defaultConfiguration.level
+    else
+      raise "can't work out where to find rules"
+    end
+  end
+
+  def format_result(result, report)
+    rule_id = result.ruleId
+    region = result.locations[0].physicalLocation.region
+    run = report.runs.first
+
+    OpenStruct.new({ severity: find_severity(result, run),
+                     description: CGI::escapeHTML(result.message.text),
+                     linenum: region ? region.startLine : 0,
+                     file_url: result.locations[0].physicalLocation.artifactLocation.uri,
+                     rule_id: rule_id })
+  end
+
   def results
     output = []
     @report.each do |report|
@@ -19,8 +53,7 @@ class SarifFile
       next if results.nil?
 
       output += results.map do |result|
-        region = result.locations[0].physicalLocation.region
-        result(region, result)
+        format_result(result, report)
       end
 
     end
@@ -28,14 +61,6 @@ class SarifFile
   end
 
   private
-
-  def result(region, result)
-    OpenStruct.new({ severity: result.level,
-                     description: CGI::escapeHTML(result.message.text),
-                     linenum: region ? region.startLine : 0,
-                     file_url: result.locations[0].physicalLocation.artifactLocation.uri,
-                     rule_id: result.ruleId })
-  end
 
   def get_sarifs(path)
     if File.directory?(path)
@@ -52,12 +77,12 @@ end
 
 # renders sarif findings into HTML and writes to disk
 class HtmlReport
-  attr_reader :results
+  attr_reader :results, :severities
 
   def initialize(sarif_file, destination_path)
     @sarif_spec = sarif_file
     @dest_path = destination_path
-    @severities = []
+    @severities = %w[error warning note]
     @content = []
     @scan_date = Time.now
   end
@@ -67,10 +92,6 @@ class HtmlReport
     @results = @sarif.results
     @severities = @results.map(&:severity).uniq
     self
-  end
-
-  def severities
-    %w[error warning note]
   end
 
   # jscpd has a single rule, which can spam the result page.

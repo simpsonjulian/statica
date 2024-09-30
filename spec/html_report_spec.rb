@@ -17,19 +17,19 @@ RSpec.describe 'HtmlReport' do
     it 'handles a single sarif file' do
       report = HtmlReport.new("spec/simple.sarif", nil)
       report.generate
-      expect(report.results.first.description).to eq "'x' is assigned a value but never used."
+      expect(report.results.first.description).to eq "&#39;x&#39; is assigned a value but never used."
     end
 
     it 'handles a directory of one or more sarif files' do
       report = HtmlReport.new("spec", nil)
       report.generate
-      expect(report.results.first.description.split("\n")[0]).to match "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
+      expect(report.results.first.description.split("\n")[0]).to match "Suspicious use of netcat with IP address"
     end
 
     it 'publishes a simple html report' do
       report = HtmlReport.new("spec/simple.sarif", "simple.html")
       report.generate.publish
-      expect(File.read("simple.html")).to match "'x' is assigned a value but never used."
+      expect(File.read("simple.html")).to match "&#39;x&#39; is assigned a value but never used."
     end
 
     it 'publishes a more complicated html report' do
@@ -57,7 +57,7 @@ RSpec.describe 'SarifReport' do
     end
 
     it 'has a description' do
-      expect(sarif_file.results.first.description).to eq "'x' is assigned a value but never used."
+      expect(sarif_file.results.first.description).to eq "&#39;x&#39; is assigned a value but never used."
 
     end
 
@@ -71,6 +71,19 @@ RSpec.describe 'SarifReport' do
 
     it 'has a rule ID' do
       expect(sarif_file.results.first.rule_id).to eq "no-unused-vars"
+    end
+
+    it 'copes with codeql sarif output' do
+      sarif_file = SarifFile.new("spec/webgoat_codeql.sarif")
+      expect(sarif_file.results.first.description).to match /This data transmitted to the user depends on \[sensitive information\].*/
+      expect(sarif_file.results.first.severity).to eq "error"
+
+    end
+
+    it 'copes with checkov sarif output' do
+      sarif_file = SarifFile.new("spec/checkov.sarif")
+      expect(sarif_file.results.first.description).to match "Suspicious use of netcat with IP address"
+      expect(sarif_file.results.first.severity).to eq "error"
     end
   end
 

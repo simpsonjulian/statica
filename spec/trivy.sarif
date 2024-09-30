@@ -1,0 +1,998 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "fullName": "Trivy Vulnerability Scanner",
+          "informationUri": "https://github.com/aquasecurity/trivy",
+          "name": "Trivy",
+          "rules": [
+            {
+              "id": "CVE-2022-32511",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "jmespath.rb (aka JMESPath for Ruby) before 1.6.1 uses JSON.load in a s ..."
+              },
+              "fullDescription": {
+                "text": "jmespath.rb (aka JMESPath for Ruby) before 1.6.1 uses JSON.load in a situation where JSON.parse is preferable."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2022-32511",
+              "help": {
+                "text": "Vulnerability CVE-2022-32511\nSeverity: CRITICAL\nPackage: jmespath\nFixed Version: \u003e= 1.6.1\nLink: [CVE-2022-32511](https://avd.aquasec.com/nvd/cve-2022-32511)\njmespath.rb (aka JMESPath for Ruby) before 1.6.1 uses JSON.load in a situation where JSON.parse is preferable.",
+                "markdown": "**Vulnerability CVE-2022-32511**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|CRITICAL|jmespath|\u003e= 1.6.1|[CVE-2022-32511](https://avd.aquasec.com/nvd/cve-2022-32511)|\n\njmespath.rb (aka JMESPath for Ruby) before 1.6.1 uses JSON.load in a situation where JSON.parse is preferable."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "9.5",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "CRITICAL"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2023-37920",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "python-certifi: Removal of e-Tugra root certificate"
+              },
+              "fullDescription": {
+                "text": "Certifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi prior to version 2023.07.22 recognizes \u0026#34;e-Tugra\u0026#34; root certificates. e-Tugra\u0026#39;s root certificates were subject to an investigation prompted by reporting of security issues in their systems. Certifi 2023.07.22 removes root certificates from \u0026#34;e-Tugra\u0026#34; from the root store."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2023-37920",
+              "help": {
+                "text": "Vulnerability CVE-2023-37920\nSeverity: HIGH\nPackage: certifi\nFixed Version: 2023.7.22\nLink: [CVE-2023-37920](https://avd.aquasec.com/nvd/cve-2023-37920)\nCertifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi prior to version 2023.07.22 recognizes \"e-Tugra\" root certificates. e-Tugra's root certificates were subject to an investigation prompted by reporting of security issues in their systems. Certifi 2023.07.22 removes root certificates from \"e-Tugra\" from the root store.",
+                "markdown": "**Vulnerability CVE-2023-37920**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|HIGH|certifi|2023.7.22|[CVE-2023-37920](https://avd.aquasec.com/nvd/cve-2023-37920)|\n\nCertifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi prior to version 2023.07.22 recognizes \"e-Tugra\" root certificates. e-Tugra's root certificates were subject to an investigation prompted by reporting of security issues in their systems. Certifi 2023.07.22 removes root certificates from \"e-Tugra\" from the root store."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "7.5",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2022-23491",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "python-certifi: untrusted root certificates"
+              },
+              "fullDescription": {
+                "text": "Certifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi 2022.12.07 removes root certificates from \u0026#34;TrustCor\u0026#34; from the root store. These are in the process of being removed from Mozilla\u0026#39;s trust store. TrustCor\u0026#39;s root certificates are being removed pursuant to an investigation prompted by media reporting that TrustCor\u0026#39;s ownership also operated a business that produced spyware. Conclusions of Mozilla\u0026#39;s investigation can be found in the linked google group discussion."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2022-23491",
+              "help": {
+                "text": "Vulnerability CVE-2022-23491\nSeverity: MEDIUM\nPackage: certifi\nFixed Version: 2022.12.07\nLink: [CVE-2022-23491](https://avd.aquasec.com/nvd/cve-2022-23491)\nCertifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi 2022.12.07 removes root certificates from \"TrustCor\" from the root store. These are in the process of being removed from Mozilla's trust store. TrustCor's root certificates are being removed pursuant to an investigation prompted by media reporting that TrustCor's ownership also operated a business that produced spyware. Conclusions of Mozilla's investigation can be found in the linked google group discussion.",
+                "markdown": "**Vulnerability CVE-2022-23491**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|certifi|2022.12.07|[CVE-2022-23491](https://avd.aquasec.com/nvd/cve-2022-23491)|\n\nCertifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi 2022.12.07 removes root certificates from \"TrustCor\" from the root store. These are in the process of being removed from Mozilla's trust store. TrustCor's root certificates are being removed pursuant to an investigation prompted by media reporting that TrustCor's ownership also operated a business that produced spyware. Conclusions of Mozilla's investigation can be found in the linked google group discussion."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "6.8",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-39689",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "python-certifi: Remove root certificates from `GLOBALTRUST` from the root store"
+              },
+              "fullDescription": {
+                "text": "Certifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi starting in 2021.05.30 and prior to 2024.07.4 recognized root certificates from `GLOBALTRUST`. Certifi 2024.07.04 removes root certificates from `GLOBALTRUST` from the root store. These are in the process of being removed from Mozilla\u0026#39;s trust store. `GLOBALTRUST`\u0026#39;s root certificates are being removed pursuant to an investigation which identified \u0026#34;long-running and unresolved compliance issues.\u0026#34;"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-39689",
+              "help": {
+                "text": "Vulnerability CVE-2024-39689\nSeverity: LOW\nPackage: certifi\nFixed Version: 2024.07.04\nLink: [CVE-2024-39689](https://avd.aquasec.com/nvd/cve-2024-39689)\nCertifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi starting in 2021.05.30 and prior to 2024.07.4 recognized root certificates from `GLOBALTRUST`. Certifi 2024.07.04 removes root certificates from `GLOBALTRUST` from the root store. These are in the process of being removed from Mozilla's trust store. `GLOBALTRUST`'s root certificates are being removed pursuant to an investigation which identified \"long-running and unresolved compliance issues.\"",
+                "markdown": "**Vulnerability CVE-2024-39689**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|LOW|certifi|2024.07.04|[CVE-2024-39689](https://avd.aquasec.com/nvd/cve-2024-39689)|\n\nCertifi is a curated collection of Root Certificates for validating the trustworthiness of SSL certificates while verifying the identity of TLS hosts. Certifi starting in 2021.05.30 and prior to 2024.07.4 recognized root certificates from `GLOBALTRUST`. Certifi 2024.07.04 removes root certificates from `GLOBALTRUST` from the root store. These are in the process of being removed from Mozilla's trust store. `GLOBALTRUST`'s root certificates are being removed pursuant to an investigation which identified \"long-running and unresolved compliance issues.\""
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "2.0",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2023-40267",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "GitPython: Insecure non-multi options in clone and clone_from is not blocked"
+              },
+              "fullDescription": {
+                "text": "GitPython before 3.1.32 does not block insecure non-multi options in clone and clone_from. NOTE: this issue exists because of an incomplete fix for CVE-2022-24439."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2023-40267",
+              "help": {
+                "text": "Vulnerability CVE-2023-40267\nSeverity: CRITICAL\nPackage: gitpython\nFixed Version: 3.1.32\nLink: [CVE-2023-40267](https://avd.aquasec.com/nvd/cve-2023-40267)\nGitPython before 3.1.32 does not block insecure non-multi options in clone and clone_from. NOTE: this issue exists because of an incomplete fix for CVE-2022-24439.",
+                "markdown": "**Vulnerability CVE-2023-40267**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|CRITICAL|gitpython|3.1.32|[CVE-2023-40267](https://avd.aquasec.com/nvd/cve-2023-40267)|\n\nGitPython before 3.1.32 does not block insecure non-multi options in clone and clone_from. NOTE: this issue exists because of an incomplete fix for CVE-2022-24439."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "9.8",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "CRITICAL"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2022-24439",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "GitPython: improper user input validation leads into a RCE"
+              },
+              "fullDescription": {
+                "text": "All versions of package gitpython are vulnerable to Remote Code Execution (RCE) due to improper user input validation, which makes it possible to inject a maliciously crafted remote URL into the clone command. Exploiting this vulnerability is possible because the library makes external calls to git without sufficient sanitization of input arguments."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2022-24439",
+              "help": {
+                "text": "Vulnerability CVE-2022-24439\nSeverity: HIGH\nPackage: gitpython\nFixed Version: 3.1.30\nLink: [CVE-2022-24439](https://avd.aquasec.com/nvd/cve-2022-24439)\nAll versions of package gitpython are vulnerable to Remote Code Execution (RCE) due to improper user input validation, which makes it possible to inject a maliciously crafted remote URL into the clone command. Exploiting this vulnerability is possible because the library makes external calls to git without sufficient sanitization of input arguments.",
+                "markdown": "**Vulnerability CVE-2022-24439**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|HIGH|gitpython|3.1.30|[CVE-2022-24439](https://avd.aquasec.com/nvd/cve-2022-24439)|\n\nAll versions of package gitpython are vulnerable to Remote Code Execution (RCE) due to improper user input validation, which makes it possible to inject a maliciously crafted remote URL into the clone command. Exploiting this vulnerability is possible because the library makes external calls to git without sufficient sanitization of input arguments."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.1",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2023-40590",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "gitpython: improper executable lookup on windows"
+              },
+              "fullDescription": {
+                "text": " GitPython is a python library used to interact with Git repositories. When resolving a program, Python/Windows look for the current working directory, and after that the PATH environment. GitPython defaults to use the `git` command, if a user runs GitPython from a repo has a `git.exe` or `git` executable, that program will be run instead of the one in the user\u0026#39;s `PATH`. This is more of a problem on how Python interacts with Windows systems, Linux and any other OS aren\u0026#39;t affected by this. But probably people using GitPython usually run it from the CWD of a repo. An attacker can trick a user to download a repository with a malicious `git` executable, if the user runs/imports GitPython from that directory, it allows the attacker to run any arbitrary commands. There is no fix currently available for windows users, however there are a few mitigations. 1: Default to an absolute path for the git program on Windows, like `C:\\\\Program Files\\\\Git\\\\cmd\\\\git.EXE` (default git path installation). 2: Require users to set the `GIT_PYTHON_GIT_EXECUTABLE` environment variable on Windows systems. 3: Make this problem prominent in the documentation and advise users to never run GitPython from an untrusted repo, or set the `GIT_PYTHON_GIT_EXECUTABLE` env var to an absolute path. 4: Resolve the executable manually by only looking into the `PATH` environment variable."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2023-40590",
+              "help": {
+                "text": "Vulnerability CVE-2023-40590\nSeverity: HIGH\nPackage: gitpython\nFixed Version: 3.1.33\nLink: [CVE-2023-40590](https://avd.aquasec.com/nvd/cve-2023-40590)\n GitPython is a python library used to interact with Git repositories. When resolving a program, Python/Windows look for the current working directory, and after that the PATH environment. GitPython defaults to use the `git` command, if a user runs GitPython from a repo has a `git.exe` or `git` executable, that program will be run instead of the one in the user's `PATH`. This is more of a problem on how Python interacts with Windows systems, Linux and any other OS aren't affected by this. But probably people using GitPython usually run it from the CWD of a repo. An attacker can trick a user to download a repository with a malicious `git` executable, if the user runs/imports GitPython from that directory, it allows the attacker to run any arbitrary commands. There is no fix currently available for windows users, however there are a few mitigations. 1: Default to an absolute path for the git program on Windows, like `C:\\\\Program Files\\\\Git\\\\cmd\\\\git.EXE` (default git path installation). 2: Require users to set the `GIT_PYTHON_GIT_EXECUTABLE` environment variable on Windows systems. 3: Make this problem prominent in the documentation and advise users to never run GitPython from an untrusted repo, or set the `GIT_PYTHON_GIT_EXECUTABLE` env var to an absolute path. 4: Resolve the executable manually by only looking into the `PATH` environment variable.",
+                "markdown": "**Vulnerability CVE-2023-40590**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|HIGH|gitpython|3.1.33|[CVE-2023-40590](https://avd.aquasec.com/nvd/cve-2023-40590)|\n\n GitPython is a python library used to interact with Git repositories. When resolving a program, Python/Windows look for the current working directory, and after that the PATH environment. GitPython defaults to use the `git` command, if a user runs GitPython from a repo has a `git.exe` or `git` executable, that program will be run instead of the one in the user's `PATH`. This is more of a problem on how Python interacts with Windows systems, Linux and any other OS aren't affected by this. But probably people using GitPython usually run it from the CWD of a repo. An attacker can trick a user to download a repository with a malicious `git` executable, if the user runs/imports GitPython from that directory, it allows the attacker to run any arbitrary commands. There is no fix currently available for windows users, however there are a few mitigations. 1: Default to an absolute path for the git program on Windows, like `C:\\\\Program Files\\\\Git\\\\cmd\\\\git.EXE` (default git path installation). 2: Require users to set the `GIT_PYTHON_GIT_EXECUTABLE` environment variable on Windows systems. 3: Make this problem prominent in the documentation and advise users to never run GitPython from an untrusted repo, or set the `GIT_PYTHON_GIT_EXECUTABLE` env var to an absolute path. 4: Resolve the executable manually by only looking into the `PATH` environment variable."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "7.8",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-22190",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "Untrusted search path under some conditions on Windows allows arbitrary code execution"
+              },
+              "fullDescription": {
+                "text": "GitPython is a python library used to interact with Git repositories. There is an incomplete fix for CVE-2023-40590. On Windows, GitPython uses an untrusted search path if it uses a shell to run `git`, as well as when it runs `bash.exe` to interpret hooks. If either of those features are used on Windows, a malicious `git.exe` or `bash.exe` may be run from an untrusted repository. This issue has been patched in version 3.1.41."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-22190",
+              "help": {
+                "text": "Vulnerability CVE-2024-22190\nSeverity: HIGH\nPackage: gitpython\nFixed Version: 3.1.41\nLink: [CVE-2024-22190](https://avd.aquasec.com/nvd/cve-2024-22190)\nGitPython is a python library used to interact with Git repositories. There is an incomplete fix for CVE-2023-40590. On Windows, GitPython uses an untrusted search path if it uses a shell to run `git`, as well as when it runs `bash.exe` to interpret hooks. If either of those features are used on Windows, a malicious `git.exe` or `bash.exe` may be run from an untrusted repository. This issue has been patched in version 3.1.41.",
+                "markdown": "**Vulnerability CVE-2024-22190**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|HIGH|gitpython|3.1.41|[CVE-2024-22190](https://avd.aquasec.com/nvd/cve-2024-22190)|\n\nGitPython is a python library used to interact with Git repositories. There is an incomplete fix for CVE-2023-40590. On Windows, GitPython uses an untrusted search path if it uses a shell to run `git`, as well as when it runs `bash.exe` to interpret hooks. If either of those features are used on Windows, a malicious `git.exe` or `bash.exe` may be run from an untrusted repository. This issue has been patched in version 3.1.41."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "7.8",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2023-41040",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "GitPython: Blind local file inclusion"
+              },
+              "fullDescription": {
+                "text": "GitPython is a python library used to interact with Git repositories. In order to resolve some git references, GitPython reads files from the `.git` directory, in some places the name of the file being read is provided by the user, GitPython doesn\u0026#39;t check if this file is located outside the `.git` directory. This allows an attacker to make GitPython read any file from the system. This vulnerability is present in https://github.com/gitpython-developers/GitPython/blob/1c8310d7cae144f74a671cbe17e51f63a830adbf/git/refs/symbolic.py#L174-L175. That code joins the base directory with a user given string without checking if the final path is located outside the base directory. This vulnerability cannot be used to read the contents of files but could in theory be used to trigger a denial of service for the program. This issue has been addressed in version 3.1.37."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2023-41040",
+              "help": {
+                "text": "Vulnerability CVE-2023-41040\nSeverity: MEDIUM\nPackage: gitpython\nFixed Version: 3.1.37\nLink: [CVE-2023-41040](https://avd.aquasec.com/nvd/cve-2023-41040)\nGitPython is a python library used to interact with Git repositories. In order to resolve some git references, GitPython reads files from the `.git` directory, in some places the name of the file being read is provided by the user, GitPython doesn't check if this file is located outside the `.git` directory. This allows an attacker to make GitPython read any file from the system. This vulnerability is present in https://github.com/gitpython-developers/GitPython/blob/1c8310d7cae144f74a671cbe17e51f63a830adbf/git/refs/symbolic.py#L174-L175. That code joins the base directory with a user given string without checking if the final path is located outside the base directory. This vulnerability cannot be used to read the contents of files but could in theory be used to trigger a denial of service for the program. This issue has been addressed in version 3.1.37.",
+                "markdown": "**Vulnerability CVE-2023-41040**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|gitpython|3.1.37|[CVE-2023-41040](https://avd.aquasec.com/nvd/cve-2023-41040)|\n\nGitPython is a python library used to interact with Git repositories. In order to resolve some git references, GitPython reads files from the `.git` directory, in some places the name of the file being read is provided by the user, GitPython doesn't check if this file is located outside the `.git` directory. This allows an attacker to make GitPython read any file from the system. This vulnerability is present in https://github.com/gitpython-developers/GitPython/blob/1c8310d7cae144f74a671cbe17e51f63a830adbf/git/refs/symbolic.py#L174-L175. That code joins the base directory with a user given string without checking if the final path is located outside the base directory. This vulnerability cannot be used to read the contents of files but could in theory be used to trigger a denial of service for the program. This issue has been addressed in version 3.1.37."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "4.0",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-3651",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "python-idna: potential DoS via resource consumption via specially crafted inputs to idna.encode()"
+              },
+              "fullDescription": {
+                "text": "A vulnerability was identified in the kjd/idna library, specifically within the `idna.encode()` function, affecting version 3.6. The issue arises from the function\u0026#39;s handling of crafted input strings, which can lead to quadratic complexity and consequently, a denial of service condition. This vulnerability is triggered by a crafted input that causes the `idna.encode()` function to process the input with considerable computational load, significantly increasing the processing time in a quadratic manner relative to the input size."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-3651",
+              "help": {
+                "text": "Vulnerability CVE-2024-3651\nSeverity: MEDIUM\nPackage: idna\nFixed Version: 3.7\nLink: [CVE-2024-3651](https://avd.aquasec.com/nvd/cve-2024-3651)\nA vulnerability was identified in the kjd/idna library, specifically within the `idna.encode()` function, affecting version 3.6. The issue arises from the function's handling of crafted input strings, which can lead to quadratic complexity and consequently, a denial of service condition. This vulnerability is triggered by a crafted input that causes the `idna.encode()` function to process the input with considerable computational load, significantly increasing the processing time in a quadratic manner relative to the input size.",
+                "markdown": "**Vulnerability CVE-2024-3651**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|idna|3.7|[CVE-2024-3651](https://avd.aquasec.com/nvd/cve-2024-3651)|\n\nA vulnerability was identified in the kjd/idna library, specifically within the `idna.encode()` function, affecting version 3.6. The issue arises from the function's handling of crafted input strings, which can lead to quadratic complexity and consequently, a denial of service condition. This vulnerability is triggered by a crafted input that causes the `idna.encode()` function to process the input with considerable computational load, significantly increasing the processing time in a quadratic manner relative to the input size."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "6.2",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-22195",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "jinja2: HTML attribute injection when passing user input as keys to xmlattr filter"
+              },
+              "fullDescription": {
+                "text": "Jinja is an extensible templating engine. Special placeholders in the template allow writing code similar to Python syntax. It is possible to inject arbitrary HTML attributes into the rendered HTML template, potentially leading to Cross-Site Scripting (XSS). The Jinja `xmlattr` filter can be abused to inject arbitrary HTML attribute keys and values, bypassing the auto escaping mechanism and potentially leading to XSS. It may also be possible to bypass attribute validation checks if they are blacklist-based.\n"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-22195",
+              "help": {
+                "text": "Vulnerability CVE-2024-22195\nSeverity: MEDIUM\nPackage: jinja2\nFixed Version: 3.1.3\nLink: [CVE-2024-22195](https://avd.aquasec.com/nvd/cve-2024-22195)\nJinja is an extensible templating engine. Special placeholders in the template allow writing code similar to Python syntax. It is possible to inject arbitrary HTML attributes into the rendered HTML template, potentially leading to Cross-Site Scripting (XSS). The Jinja `xmlattr` filter can be abused to inject arbitrary HTML attribute keys and values, bypassing the auto escaping mechanism and potentially leading to XSS. It may also be possible to bypass attribute validation checks if they are blacklist-based.\n",
+                "markdown": "**Vulnerability CVE-2024-22195**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|jinja2|3.1.3|[CVE-2024-22195](https://avd.aquasec.com/nvd/cve-2024-22195)|\n\nJinja is an extensible templating engine. Special placeholders in the template allow writing code similar to Python syntax. It is possible to inject arbitrary HTML attributes into the rendered HTML template, potentially leading to Cross-Site Scripting (XSS). The Jinja `xmlattr` filter can be abused to inject arbitrary HTML attribute keys and values, bypassing the auto escaping mechanism and potentially leading to XSS. It may also be possible to bypass attribute validation checks if they are blacklist-based.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.4",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-34064",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "jinja2: accepts keys containing non-attribute characters"
+              },
+              "fullDescription": {
+                "text": "Jinja is an extensible templating engine. The `xmlattr` filter in affected versions of Jinja accepts keys containing non-attribute characters. XML/HTML attributes cannot contain spaces, `/`, `\u0026gt;`, or `=`, as each would then be interpreted as starting a separate attribute. If an application accepts keys (as opposed to only values) as user input, and renders these in pages that other users see as well, an attacker could use this to inject other attributes and perform XSS. The fix for CVE-2024-22195 only addressed spaces but not other characters. Accepting keys as user input is now explicitly considered an unintended use case of the `xmlattr` filter, and code that does so without otherwise validating the input should be flagged as insecure, regardless of Jinja version. Accepting _values_ as user input continues to be safe. This vulnerability is fixed in 3.1.4."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-34064",
+              "help": {
+                "text": "Vulnerability CVE-2024-34064\nSeverity: MEDIUM\nPackage: jinja2\nFixed Version: 3.1.4\nLink: [CVE-2024-34064](https://avd.aquasec.com/nvd/cve-2024-34064)\nJinja is an extensible templating engine. The `xmlattr` filter in affected versions of Jinja accepts keys containing non-attribute characters. XML/HTML attributes cannot contain spaces, `/`, `\u003e`, or `=`, as each would then be interpreted as starting a separate attribute. If an application accepts keys (as opposed to only values) as user input, and renders these in pages that other users see as well, an attacker could use this to inject other attributes and perform XSS. The fix for CVE-2024-22195 only addressed spaces but not other characters. Accepting keys as user input is now explicitly considered an unintended use case of the `xmlattr` filter, and code that does so without otherwise validating the input should be flagged as insecure, regardless of Jinja version. Accepting _values_ as user input continues to be safe. This vulnerability is fixed in 3.1.4.",
+                "markdown": "**Vulnerability CVE-2024-34064**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|jinja2|3.1.4|[CVE-2024-34064](https://avd.aquasec.com/nvd/cve-2024-34064)|\n\nJinja is an extensible templating engine. The `xmlattr` filter in affected versions of Jinja accepts keys containing non-attribute characters. XML/HTML attributes cannot contain spaces, `/`, `\u003e`, or `=`, as each would then be interpreted as starting a separate attribute. If an application accepts keys (as opposed to only values) as user input, and renders these in pages that other users see as well, an attacker could use this to inject other attributes and perform XSS. The fix for CVE-2024-22195 only addressed spaces but not other characters. Accepting keys as user input is now explicitly considered an unintended use case of the `xmlattr` filter, and code that does so without otherwise validating the input should be flagged as insecure, regardless of Jinja version. Accepting _values_ as user input continues to be safe. This vulnerability is fixed in 3.1.4."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.4",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2023-32681",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "python-requests: Unintended leak of Proxy-Authorization header"
+              },
+              "fullDescription": {
+                "text": "Requests is a HTTP library. Since Requests 2.3.0, Requests has been leaking Proxy-Authorization headers to destination servers when redirected to an HTTPS endpoint. This is a product of how we use `rebuild_proxies` to reattach the `Proxy-Authorization` header to requests. For HTTP connections sent through the tunnel, the proxy will identify the header in the request itself and remove it prior to forwarding to the destination server. However when sent over HTTPS, the `Proxy-Authorization` header must be sent in the CONNECT request as the proxy has no visibility into the tunneled request. This results in Requests forwarding proxy credentials to the destination server unintentionally, allowing a malicious actor to potentially exfiltrate sensitive information. This issue has been patched in version 2.31.0.\n\n"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2023-32681",
+              "help": {
+                "text": "Vulnerability CVE-2023-32681\nSeverity: MEDIUM\nPackage: requests\nFixed Version: 2.31.0\nLink: [CVE-2023-32681](https://avd.aquasec.com/nvd/cve-2023-32681)\nRequests is a HTTP library. Since Requests 2.3.0, Requests has been leaking Proxy-Authorization headers to destination servers when redirected to an HTTPS endpoint. This is a product of how we use `rebuild_proxies` to reattach the `Proxy-Authorization` header to requests. For HTTP connections sent through the tunnel, the proxy will identify the header in the request itself and remove it prior to forwarding to the destination server. However when sent over HTTPS, the `Proxy-Authorization` header must be sent in the CONNECT request as the proxy has no visibility into the tunneled request. This results in Requests forwarding proxy credentials to the destination server unintentionally, allowing a malicious actor to potentially exfiltrate sensitive information. This issue has been patched in version 2.31.0.\n\n",
+                "markdown": "**Vulnerability CVE-2023-32681**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|requests|2.31.0|[CVE-2023-32681](https://avd.aquasec.com/nvd/cve-2023-32681)|\n\nRequests is a HTTP library. Since Requests 2.3.0, Requests has been leaking Proxy-Authorization headers to destination servers when redirected to an HTTPS endpoint. This is a product of how we use `rebuild_proxies` to reattach the `Proxy-Authorization` header to requests. For HTTP connections sent through the tunnel, the proxy will identify the header in the request itself and remove it prior to forwarding to the destination server. However when sent over HTTPS, the `Proxy-Authorization` header must be sent in the CONNECT request as the proxy has no visibility into the tunneled request. This results in Requests forwarding proxy credentials to the destination server unintentionally, allowing a malicious actor to potentially exfiltrate sensitive information. This issue has been patched in version 2.31.0.\n\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "6.1",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-35195",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "requests: subsequent requests to the same host ignore cert verification"
+              },
+              "fullDescription": {
+                "text": "Requests is a HTTP library. Prior to 2.32.0, when making requests through a Requests `Session`, if the first request is made with `verify=False` to disable cert verification, all subsequent requests to the same host will continue to ignore cert verification regardless of changes to the value of `verify`. This behavior will continue for the lifecycle of the connection in the connection pool. This vulnerability is fixed in 2.32.0."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-35195",
+              "help": {
+                "text": "Vulnerability CVE-2024-35195\nSeverity: MEDIUM\nPackage: requests\nFixed Version: 2.32.0\nLink: [CVE-2024-35195](https://avd.aquasec.com/nvd/cve-2024-35195)\nRequests is a HTTP library. Prior to 2.32.0, when making requests through a Requests `Session`, if the first request is made with `verify=False` to disable cert verification, all subsequent requests to the same host will continue to ignore cert verification regardless of changes to the value of `verify`. This behavior will continue for the lifecycle of the connection in the connection pool. This vulnerability is fixed in 2.32.0.",
+                "markdown": "**Vulnerability CVE-2024-35195**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|requests|2.32.0|[CVE-2024-35195](https://avd.aquasec.com/nvd/cve-2024-35195)|\n\nRequests is a HTTP library. Prior to 2.32.0, when making requests through a Requests `Session`, if the first request is made with `verify=False` to disable cert verification, all subsequent requests to the same host will continue to ignore cert verification regardless of changes to the value of `verify`. This behavior will continue for the lifecycle of the connection in the connection pool. This vulnerability is fixed in 2.32.0."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.6",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-34062",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "python-tqdm: non-boolean CLI arguments may lead to local code execution"
+              },
+              "fullDescription": {
+                "text": "tqdm is an open source progress bar for Python and CLI. Any optional non-boolean CLI arguments (e.g. `--delim`, `--buf-size`, `--manpath`) are passed through python\u0026#39;s `eval`, allowing arbitrary code execution. This issue is only locally exploitable and had been addressed in release version 4.66.3. All users are advised to upgrade. There are no known workarounds for this vulnerability."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-34062",
+              "help": {
+                "text": "Vulnerability CVE-2024-34062\nSeverity: LOW\nPackage: tqdm\nFixed Version: 4.66.3\nLink: [CVE-2024-34062](https://avd.aquasec.com/nvd/cve-2024-34062)\ntqdm is an open source progress bar for Python and CLI. Any optional non-boolean CLI arguments (e.g. `--delim`, `--buf-size`, `--manpath`) are passed through python's `eval`, allowing arbitrary code execution. This issue is only locally exploitable and had been addressed in release version 4.66.3. All users are advised to upgrade. There are no known workarounds for this vulnerability.",
+                "markdown": "**Vulnerability CVE-2024-34062**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|LOW|tqdm|4.66.3|[CVE-2024-34062](https://avd.aquasec.com/nvd/cve-2024-34062)|\n\ntqdm is an open source progress bar for Python and CLI. Any optional non-boolean CLI arguments (e.g. `--delim`, `--buf-size`, `--manpath`) are passed through python's `eval`, allowing arbitrary code execution. This issue is only locally exploitable and had been addressed in release version 4.66.3. All users are advised to upgrade. There are no known workarounds for this vulnerability."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "3.9",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2023-43804",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "python-urllib3: Cookie request header isn\u0026#39;t stripped during cross-origin redirects"
+              },
+              "fullDescription": {
+                "text": "urllib3 is a user-friendly HTTP client library for Python. urllib3 doesn\u0026#39;t treat the `Cookie` HTTP header special or provide any helpers for managing cookies over HTTP, that is the responsibility of the user. However, it is possible for a user to specify a `Cookie` header and unknowingly leak information via HTTP redirects to a different origin if that user doesn\u0026#39;t disable redirects explicitly. This issue has been patched in urllib3 version 1.26.17 or 2.0.5."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2023-43804",
+              "help": {
+                "text": "Vulnerability CVE-2023-43804\nSeverity: MEDIUM\nPackage: urllib3\nFixed Version: 2.0.6, 1.26.17\nLink: [CVE-2023-43804](https://avd.aquasec.com/nvd/cve-2023-43804)\nurllib3 is a user-friendly HTTP client library for Python. urllib3 doesn't treat the `Cookie` HTTP header special or provide any helpers for managing cookies over HTTP, that is the responsibility of the user. However, it is possible for a user to specify a `Cookie` header and unknowingly leak information via HTTP redirects to a different origin if that user doesn't disable redirects explicitly. This issue has been patched in urllib3 version 1.26.17 or 2.0.5.",
+                "markdown": "**Vulnerability CVE-2023-43804**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|urllib3|2.0.6, 1.26.17|[CVE-2023-43804](https://avd.aquasec.com/nvd/cve-2023-43804)|\n\nurllib3 is a user-friendly HTTP client library for Python. urllib3 doesn't treat the `Cookie` HTTP header special or provide any helpers for managing cookies over HTTP, that is the responsibility of the user. However, it is possible for a user to specify a `Cookie` header and unknowingly leak information via HTTP redirects to a different origin if that user doesn't disable redirects explicitly. This issue has been patched in urllib3 version 1.26.17 or 2.0.5."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.9",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2023-45803",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "urllib3: Request body not stripped after redirect from 303 status changes request method to GET"
+              },
+              "fullDescription": {
+                "text": "urllib3 is a user-friendly HTTP client library for Python. urllib3 previously wouldn\u0026#39;t remove the HTTP request body when an HTTP redirect response using status 301, 302, or 303 after the request had its method changed from one that could accept a request body (like `POST`) to `GET` as is required by HTTP RFCs. Although this behavior is not specified in the section for redirects, it can be inferred by piecing together information from different sections and we have observed the behavior in other major HTTP client implementations like curl and web browsers. Because the vulnerability requires a previously trusted service to become compromised in order to have an impact on confidentiality we believe the exploitability of this vulnerability is low. Additionally, many users aren\u0026#39;t putting sensitive data in HTTP request bodies, if this is the case then this vulnerability isn\u0026#39;t exploitable. Both of the following conditions must be true to be affected by this vulnerability: 1. Using urllib3 and submitting sensitive information in the HTTP request body (such as form data or JSON) and 2. The origin service is compromised and starts redirecting using 301, 302, or 303 to a malicious peer or the redirected-to service becomes compromised. This issue has been addressed in versions 1.26.18 and 2.0.7 and users are advised to update to resolve this issue. Users unable to update should disable redirects for services that aren\u0026#39;t expecting to respond with redirects with `redirects=False` and disable automatic redirects with `redirects=False` and handle 301, 302, and 303 redirects manually by stripping the HTTP request body.\n"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2023-45803",
+              "help": {
+                "text": "Vulnerability CVE-2023-45803\nSeverity: MEDIUM\nPackage: urllib3\nFixed Version: 2.0.7, 1.26.18\nLink: [CVE-2023-45803](https://avd.aquasec.com/nvd/cve-2023-45803)\nurllib3 is a user-friendly HTTP client library for Python. urllib3 previously wouldn't remove the HTTP request body when an HTTP redirect response using status 301, 302, or 303 after the request had its method changed from one that could accept a request body (like `POST`) to `GET` as is required by HTTP RFCs. Although this behavior is not specified in the section for redirects, it can be inferred by piecing together information from different sections and we have observed the behavior in other major HTTP client implementations like curl and web browsers. Because the vulnerability requires a previously trusted service to become compromised in order to have an impact on confidentiality we believe the exploitability of this vulnerability is low. Additionally, many users aren't putting sensitive data in HTTP request bodies, if this is the case then this vulnerability isn't exploitable. Both of the following conditions must be true to be affected by this vulnerability: 1. Using urllib3 and submitting sensitive information in the HTTP request body (such as form data or JSON) and 2. The origin service is compromised and starts redirecting using 301, 302, or 303 to a malicious peer or the redirected-to service becomes compromised. This issue has been addressed in versions 1.26.18 and 2.0.7 and users are advised to update to resolve this issue. Users unable to update should disable redirects for services that aren't expecting to respond with redirects with `redirects=False` and disable automatic redirects with `redirects=False` and handle 301, 302, and 303 redirects manually by stripping the HTTP request body.\n",
+                "markdown": "**Vulnerability CVE-2023-45803**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|urllib3|2.0.7, 1.26.18|[CVE-2023-45803](https://avd.aquasec.com/nvd/cve-2023-45803)|\n\nurllib3 is a user-friendly HTTP client library for Python. urllib3 previously wouldn't remove the HTTP request body when an HTTP redirect response using status 301, 302, or 303 after the request had its method changed from one that could accept a request body (like `POST`) to `GET` as is required by HTTP RFCs. Although this behavior is not specified in the section for redirects, it can be inferred by piecing together information from different sections and we have observed the behavior in other major HTTP client implementations like curl and web browsers. Because the vulnerability requires a previously trusted service to become compromised in order to have an impact on confidentiality we believe the exploitability of this vulnerability is low. Additionally, many users aren't putting sensitive data in HTTP request bodies, if this is the case then this vulnerability isn't exploitable. Both of the following conditions must be true to be affected by this vulnerability: 1. Using urllib3 and submitting sensitive information in the HTTP request body (such as form data or JSON) and 2. The origin service is compromised and starts redirecting using 301, 302, or 303 to a malicious peer or the redirected-to service becomes compromised. This issue has been addressed in versions 1.26.18 and 2.0.7 and users are advised to update to resolve this issue. Users unable to update should disable redirects for services that aren't expecting to respond with redirects with `redirects=False` and disable automatic redirects with `redirects=False` and handle 301, 302, and 303 redirects manually by stripping the HTTP request body.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "4.2",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "CVE-2024-37891",
+              "name": "LanguageSpecificPackageVulnerability",
+              "shortDescription": {
+                "text": "urllib3: proxy-authorization request header is not stripped during cross-origin redirects"
+              },
+              "fullDescription": {
+                "text": " urllib3 is a user-friendly HTTP client library for Python. When using urllib3\u0026#39;s proxy support with `ProxyManager`, the `Proxy-Authorization` header is only sent to the configured proxy, as expected. However, when sending HTTP requests *without* using urllib3\u0026#39;s proxy support, it\u0026#39;s possible to accidentally configure the `Proxy-Authorization` header even though it won\u0026#39;t have any effect as the request is not using a forwarding proxy or a tunneling proxy. In those cases, urllib3 doesn\u0026#39;t treat the `Proxy-Authorization` HTTP header as one carrying authentication material and thus doesn\u0026#39;t strip the header on cross-origin redirects. Because this is a highly unlikely scenario, we believe the severity of this vulnerability is low for almost all users. Out of an abundance of caution urllib3 will automatically strip the `Proxy-Authorization` header during cross-origin redirects to avoid the small chance that users are doing this on accident. Users should use urllib3\u0026#39;s proxy support or disable automatic redirects to achieve safe processing of the `Proxy-Authorization` header, but we still decided to strip the header by default in order to further protect users who aren\u0026#39;t using the correct approach. We believe the number of usages affected by this advisory is low. It requires all of the following to be true to be exploited: 1. Setting the `Proxy-Authorization` header without using urllib3\u0026#39;s built-in proxy support. 2. Not disabling HTTP redirects. 3. Either not using an HTTPS origin server or for the proxy or target origin to redirect to a malicious origin. Users are advised to update to either version 1.26.19 or version 2.2.2. Users unable to upgrade may use the `Proxy-Authorization` header with urllib3\u0026#39;s `ProxyManager`, disable HTTP redirects using `redirects=False` when sending requests, or not user the `Proxy-Authorization` header as mitigations."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/nvd/cve-2024-37891",
+              "help": {
+                "text": "Vulnerability CVE-2024-37891\nSeverity: MEDIUM\nPackage: urllib3\nFixed Version: 1.26.19, 2.2.2\nLink: [CVE-2024-37891](https://avd.aquasec.com/nvd/cve-2024-37891)\n urllib3 is a user-friendly HTTP client library for Python. When using urllib3's proxy support with `ProxyManager`, the `Proxy-Authorization` header is only sent to the configured proxy, as expected. However, when sending HTTP requests *without* using urllib3's proxy support, it's possible to accidentally configure the `Proxy-Authorization` header even though it won't have any effect as the request is not using a forwarding proxy or a tunneling proxy. In those cases, urllib3 doesn't treat the `Proxy-Authorization` HTTP header as one carrying authentication material and thus doesn't strip the header on cross-origin redirects. Because this is a highly unlikely scenario, we believe the severity of this vulnerability is low for almost all users. Out of an abundance of caution urllib3 will automatically strip the `Proxy-Authorization` header during cross-origin redirects to avoid the small chance that users are doing this on accident. Users should use urllib3's proxy support or disable automatic redirects to achieve safe processing of the `Proxy-Authorization` header, but we still decided to strip the header by default in order to further protect users who aren't using the correct approach. We believe the number of usages affected by this advisory is low. It requires all of the following to be true to be exploited: 1. Setting the `Proxy-Authorization` header without using urllib3's built-in proxy support. 2. Not disabling HTTP redirects. 3. Either not using an HTTPS origin server or for the proxy or target origin to redirect to a malicious origin. Users are advised to update to either version 1.26.19 or version 2.2.2. Users unable to upgrade may use the `Proxy-Authorization` header with urllib3's `ProxyManager`, disable HTTP redirects using `redirects=False` when sending requests, or not user the `Proxy-Authorization` header as mitigations.",
+                "markdown": "**Vulnerability CVE-2024-37891**\n| Severity | Package | Fixed Version | Link |\n| --- | --- | --- | --- |\n|MEDIUM|urllib3|1.26.19, 2.2.2|[CVE-2024-37891](https://avd.aquasec.com/nvd/cve-2024-37891)|\n\n urllib3 is a user-friendly HTTP client library for Python. When using urllib3's proxy support with `ProxyManager`, the `Proxy-Authorization` header is only sent to the configured proxy, as expected. However, when sending HTTP requests *without* using urllib3's proxy support, it's possible to accidentally configure the `Proxy-Authorization` header even though it won't have any effect as the request is not using a forwarding proxy or a tunneling proxy. In those cases, urllib3 doesn't treat the `Proxy-Authorization` HTTP header as one carrying authentication material and thus doesn't strip the header on cross-origin redirects. Because this is a highly unlikely scenario, we believe the severity of this vulnerability is low for almost all users. Out of an abundance of caution urllib3 will automatically strip the `Proxy-Authorization` header during cross-origin redirects to avoid the small chance that users are doing this on accident. Users should use urllib3's proxy support or disable automatic redirects to achieve safe processing of the `Proxy-Authorization` header, but we still decided to strip the header by default in order to further protect users who aren't using the correct approach. We believe the number of usages affected by this advisory is low. It requires all of the following to be true to be exploited: 1. Setting the `Proxy-Authorization` header without using urllib3's built-in proxy support. 2. Not disabling HTTP redirects. 3. Either not using an HTTPS origin server or for the proxy or target origin to redirect to a malicious origin. Users are advised to update to either version 1.26.19 or version 2.2.2. Users unable to upgrade may use the `Proxy-Authorization` header with urllib3's `ProxyManager`, disable HTTP redirects using `redirects=False` when sending requests, or not user the `Proxy-Authorization` header as mitigations."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "4.4",
+                "tags": [
+                  "vulnerability",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            }
+          ],
+          "version": "0.55.2"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "CVE-2022-32511",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Package: jmespath\nInstalled Version: 1.4.0\nVulnerability CVE-2022-32511\nSeverity: CRITICAL\nFixed Version: \u003e= 1.6.1\nLink: [CVE-2022-32511](https://avd.aquasec.com/nvd/cve-2022-32511)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Gemfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 62,
+                  "startColumn": 1,
+                  "endLine": 62,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Gemfile.lock: jmespath@1.4.0"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2023-37920",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Package: certifi\nInstalled Version: 2021.5.30\nVulnerability CVE-2023-37920\nSeverity: HIGH\nFixed Version: 2023.7.22\nLink: [CVE-2023-37920](https://avd.aquasec.com/nvd/cve-2023-37920)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 56,
+                  "startColumn": 1,
+                  "endLine": 62,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: certifi@2021.5.30"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2022-23491",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Package: certifi\nInstalled Version: 2021.5.30\nVulnerability CVE-2022-23491\nSeverity: MEDIUM\nFixed Version: 2022.12.07\nLink: [CVE-2022-23491](https://avd.aquasec.com/nvd/cve-2022-23491)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 56,
+                  "startColumn": 1,
+                  "endLine": 62,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: certifi@2021.5.30"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-39689",
+          "ruleIndex": 3,
+          "level": "note",
+          "message": {
+            "text": "Package: certifi\nInstalled Version: 2021.5.30\nVulnerability CVE-2024-39689\nSeverity: LOW\nFixed Version: 2024.07.04\nLink: [CVE-2024-39689](https://avd.aquasec.com/nvd/cve-2024-39689)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 56,
+                  "startColumn": 1,
+                  "endLine": 62,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: certifi@2021.5.30"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2023-40267",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Package: gitpython\nInstalled Version: 3.1.18\nVulnerability CVE-2023-40267\nSeverity: CRITICAL\nFixed Version: 3.1.32\nLink: [CVE-2023-40267](https://avd.aquasec.com/nvd/cve-2023-40267)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 170,
+                  "startColumn": 1,
+                  "endLine": 177,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: gitpython@3.1.18"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2022-24439",
+          "ruleIndex": 5,
+          "level": "error",
+          "message": {
+            "text": "Package: gitpython\nInstalled Version: 3.1.18\nVulnerability CVE-2022-24439\nSeverity: HIGH\nFixed Version: 3.1.30\nLink: [CVE-2022-24439](https://avd.aquasec.com/nvd/cve-2022-24439)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 170,
+                  "startColumn": 1,
+                  "endLine": 177,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: gitpython@3.1.18"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2023-40590",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Package: gitpython\nInstalled Version: 3.1.18\nVulnerability CVE-2023-40590\nSeverity: HIGH\nFixed Version: 3.1.33\nLink: [CVE-2023-40590](https://avd.aquasec.com/nvd/cve-2023-40590)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 170,
+                  "startColumn": 1,
+                  "endLine": 177,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: gitpython@3.1.18"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-22190",
+          "ruleIndex": 7,
+          "level": "error",
+          "message": {
+            "text": "Package: gitpython\nInstalled Version: 3.1.18\nVulnerability CVE-2024-22190\nSeverity: HIGH\nFixed Version: 3.1.41\nLink: [CVE-2024-22190](https://avd.aquasec.com/nvd/cve-2024-22190)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 170,
+                  "startColumn": 1,
+                  "endLine": 177,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: gitpython@3.1.18"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2023-41040",
+          "ruleIndex": 8,
+          "level": "warning",
+          "message": {
+            "text": "Package: gitpython\nInstalled Version: 3.1.18\nVulnerability CVE-2023-41040\nSeverity: MEDIUM\nFixed Version: 3.1.37\nLink: [CVE-2023-41040](https://avd.aquasec.com/nvd/cve-2023-41040)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 170,
+                  "startColumn": 1,
+                  "endLine": 177,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: gitpython@3.1.18"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-3651",
+          "ruleIndex": 9,
+          "level": "warning",
+          "message": {
+            "text": "Package: idna\nInstalled Version: 3.2\nVulnerability CVE-2024-3651\nSeverity: MEDIUM\nFixed Version: 3.7\nLink: [CVE-2024-3651](https://avd.aquasec.com/nvd/cve-2024-3651)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 178,
+                  "startColumn": 1,
+                  "endLine": 185,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: idna@3.2"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-22195",
+          "ruleIndex": 10,
+          "level": "warning",
+          "message": {
+            "text": "Package: jinja2\nInstalled Version: 3.0.1\nVulnerability CVE-2024-22195\nSeverity: MEDIUM\nFixed Version: 3.1.3\nLink: [CVE-2024-22195](https://avd.aquasec.com/nvd/cve-2024-22195)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 186,
+                  "startColumn": 1,
+                  "endLine": 193,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: jinja2@3.0.1"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-34064",
+          "ruleIndex": 11,
+          "level": "warning",
+          "message": {
+            "text": "Package: jinja2\nInstalled Version: 3.0.1\nVulnerability CVE-2024-34064\nSeverity: MEDIUM\nFixed Version: 3.1.4\nLink: [CVE-2024-34064](https://avd.aquasec.com/nvd/cve-2024-34064)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 186,
+                  "startColumn": 1,
+                  "endLine": 193,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: jinja2@3.0.1"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2023-32681",
+          "ruleIndex": 12,
+          "level": "warning",
+          "message": {
+            "text": "Package: requests\nInstalled Version: 2.26.0\nVulnerability CVE-2023-32681\nSeverity: MEDIUM\nFixed Version: 2.31.0\nLink: [CVE-2023-32681](https://avd.aquasec.com/nvd/cve-2023-32681)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 344,
+                  "startColumn": 1,
+                  "endLine": 351,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: requests@2.26.0"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-35195",
+          "ruleIndex": 13,
+          "level": "warning",
+          "message": {
+            "text": "Package: requests\nInstalled Version: 2.26.0\nVulnerability CVE-2024-35195\nSeverity: MEDIUM\nFixed Version: 2.32.0\nLink: [CVE-2024-35195](https://avd.aquasec.com/nvd/cve-2024-35195)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 344,
+                  "startColumn": 1,
+                  "endLine": 351,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: requests@2.26.0"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-34062",
+          "ruleIndex": 14,
+          "level": "note",
+          "message": {
+            "text": "Package: tqdm\nInstalled Version: 4.62.0\nVulnerability CVE-2024-34062\nSeverity: LOW\nFixed Version: 4.66.3\nLink: [CVE-2024-34062](https://avd.aquasec.com/nvd/cve-2024-34062)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 411,
+                  "startColumn": 1,
+                  "endLine": 418,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: tqdm@4.62.0"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2023-43804",
+          "ruleIndex": 15,
+          "level": "warning",
+          "message": {
+            "text": "Package: urllib3\nInstalled Version: 1.26.6\nVulnerability CVE-2023-43804\nSeverity: MEDIUM\nFixed Version: 2.0.6, 1.26.17\nLink: [CVE-2023-43804](https://avd.aquasec.com/nvd/cve-2023-43804)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 434,
+                  "startColumn": 1,
+                  "endLine": 441,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: urllib3@1.26.6"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2023-45803",
+          "ruleIndex": 16,
+          "level": "warning",
+          "message": {
+            "text": "Package: urllib3\nInstalled Version: 1.26.6\nVulnerability CVE-2023-45803\nSeverity: MEDIUM\nFixed Version: 2.0.7, 1.26.18\nLink: [CVE-2023-45803](https://avd.aquasec.com/nvd/cve-2023-45803)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 434,
+                  "startColumn": 1,
+                  "endLine": 441,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: urllib3@1.26.6"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2024-37891",
+          "ruleIndex": 17,
+          "level": "warning",
+          "message": {
+            "text": "Package: urllib3\nInstalled Version: 1.26.6\nVulnerability CVE-2024-37891\nSeverity: MEDIUM\nFixed Version: 1.26.19, 2.2.2\nLink: [CVE-2024-37891](https://avd.aquasec.com/nvd/cve-2024-37891)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Pipfile.lock",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 434,
+                  "startColumn": 1,
+                  "endLine": 441,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Pipfile.lock: urllib3@1.26.6"
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits",
+      "originalUriBaseIds": {
+        "ROOTPATH": {
+          "uri": "file:///Users/jsimpson/dev/simpsonjulian/terraform/"
+        }
+      }
+    }
+  ]
+}
