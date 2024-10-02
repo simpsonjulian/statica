@@ -37,7 +37,7 @@ echo "Scanning complete.  Reports found:"
 ls "${tmpdir}"
 
 
-# chuck in a console arg
+# console output
 if [[ "${modes}" =~ 'console' ]]; then
 
   # stop bearer output confusing the sarif library
@@ -47,6 +47,7 @@ if [[ "${modes}" =~ 'console' ]]; then
   echo "Summary:"
   sarif summary "${tmpdir}"/*.sarif
 fi
+# html output
 if [[ "${modes}" =~ "html" ]]; then
 
   html_report="${source}/statica.html"

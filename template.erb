@@ -51,11 +51,6 @@
           box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
 
-      h1 {
-          text-align: center;
-          color: #444;
-      }
-
       .severity {
           font-size: 20px;
           font-weight: bold;
@@ -72,6 +67,7 @@
 
       h1 {
           margin: 0;
+          text-align: center;
           font-size: 24px;
           color: #444;
       }
@@ -118,9 +114,14 @@
     document.addEventListener("DOMContentLoaded", function () {
         let coll = document.getElementsByClassName("collapsible");
         for (let i = 0; i < coll.length; i++) {
+            let content = coll[i].nextElementSibling;
+            if (coll[i].classList.contains("active")) {
+                content.style.display = "block";
+            } else {
+                content.style.display = "none";
+            }
             coll[i].addEventListener("click", function () {
                 this.classList.toggle("active");
-                let content = this.nextElementSibling;
                 if (content.style.display === "block") {
                     content.style.display = "none";
                 } else {

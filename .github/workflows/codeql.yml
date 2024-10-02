@@ -84,7 +84,7 @@ jobs:
             'your code, for example:'
           echo '  make bootstrap'
           echo '  make release'
-  
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
