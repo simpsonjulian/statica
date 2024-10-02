@@ -1,10 +1,13 @@
 #!/bin/bash
 
 set -euo pipefail
+usage() {
+  echo "Usage: $0 <path to app source> [console|html]"
+  exit 1
+}
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <path to app source>"
-  exit 1
+  usage
 fi
 
 REPO_URL=''
@@ -15,26 +18,14 @@ tmpdir=$(mktemp -d)
 source=$1
 shift
 
-if [ "$#" -eq 0 ]; then
-  modes="console"
-else
-  modes=""
-  for arg in $@; do
-    case $arg in
-      console)
-        modes="console"
-        ;;
-      html)
-        modes="${modes} html"
-        ;;
-      *)
-        echo "Unknown argument: $arg"
-        exit 1
-        ;;
-    esac
-  done
-fi
+for arg in $@; do
+  if [ "$arg" != "console" ] && [ "$arg" != "html" ]; then
+    usage
+  fi
+done
 
+
+modes="$@"
 echo "Scanning ${source}"
 for scanner in tools.d/*; do
   name=$(basename "${scanner}")
@@ -45,6 +36,7 @@ done
 echo "Scanning complete.  Reports found:"
 ls "${tmpdir}"
 
+
 # chuck in a console arg
 if [[ "${modes}" =~ 'console' ]]; then
 
@@ -54,17 +46,19 @@ if [[ "${modes}" =~ 'console' ]]; then
   fi
   echo "Summary:"
   sarif summary "${tmpdir}"/*.sarif
-elif [[ "${modes}" =~ "html" ]]; then
-  echo "HTML report at:"
+fi
+if [[ "${modes}" =~ "html" ]]; then
+
 
   html_report="${source}/statica.html"
-  REPO_URL=$(cd "${source}" && git config --get remote.origin.url)
-  REPO_BRANCH=$(cd "${source}" && git rev-parse --abbrev-ref HEAD)
-  LATEST_COMMIT_SHA=$(cd "${source}" && git rev-parse --short HEAD )
+  REPO_URL=$(cd "${source}" && git config --get remote.origin.url || echo "unknown")
+  REPO_BRANCH=$(cd "${source}" && git rev-parse --abbrev-ref HEAD || echo "unknown")
+  LATEST_COMMIT_SHA=$(cd "${source}" && git rev-parse --short HEAD || echo "unknown")
 
   export REPO_URL REPO_BRANCH LATEST_COMMIT_SHA
 
   ./html_report.rb "${tmpdir}" "${html_report}"
+  echo "HTML report at:"
   echo "${html_report}"
 fi
 
