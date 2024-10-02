@@ -53,9 +53,6 @@ if [[ "${modes}" =~ 'console' ]]; then
     rm -f "$tmpdir"/bearer.sarif
   fi
   echo "Summary:"
-#  for file in "${tmpdir}"/*.sarif; do
-#    jq < "${file}"
-#  done
   sarif summary "${tmpdir}"/*.sarif
 elif [[ "${modes}" =~ "html" ]]; then
   echo "HTML report at:"

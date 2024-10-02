@@ -16,55 +16,14 @@ choose() {
 result=${tmpdir}/lizard.out
 lizard -w -o "${result}" "${source}" || true
 
-[ -s $result ] || exit 1
-# iterate over results, and build up a JSON list of findings
-# shellcheck disable=SC2034
-
+[ -s "$result" ] || exit 1
 
 awk -F':' '{print $2,$3, $1}' "${result}"| while read -r startline severity filename ; do
-
-
-  cat <<-EOF >> "${tmpdir}"/findings.json
-  {
-      "ruleId": "complexity-above-15",
-      "message": {
-          "text": "Function has a cyclomatic complexity value higher than 15"
-      },
-      "locations": [
-          {
-              "physicalLocation": {
-                  "artifactLocation": {
-                      "uri": "${filename}"
-                  },
-                  "region": {
-                      "startLine": ${startline}
-                  }
-              }
-          }
-      ]
-  },
-	EOF
-
+  printf "%s,%s,%s,%s,%s,%s\n" "complexity-above-15" "${severity}" "Function has a cyclomatic complexity value higher than 15" \
+  "${filename}"  "${startline}"  0 >> "${tmpdir}"/findings.csv
 done
 
-# wrap the findings in some metadata
-cat <<-EOF
-  {
-      "version": "2.1.0",
-      "runs": [
-          {
-              "tool": {
-                  "driver": {
-                      "name": "lizard",
-                      "informationUri": "https://github.com/terryyin/lizard",
-                      "rules": []
-                  }
-              },
-              "results": [$(sed '$ s/,$//' "${tmpdir}"/findings.json)]
-          }
-      ]
-  }
-EOF
+./2sarif.rb "lizard" "$(lizard --version)" "${tmpdir}/findings.csv"
 
 # clean up
 rm -rf "${tmpdir}"
