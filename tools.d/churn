@@ -6,8 +6,9 @@ which -s git || exit 1
 source=$1
 tmpdir=$(mktemp -d)
 OUTPUT="${tmpdir}/churned"
+CSV="${tmpdir}/findings.csv"
 TOP_N_CHURNED_FILES=10
-findings="${tmpdir}/findings.json"
+
 
 git -C "${source}" log --format=format: --name-only --since=12.month \
  | grep -Ev '^$' \
@@ -16,52 +17,10 @@ git -C "${source}" log --format=format: --name-only --since=12.month \
  | sort -nr \
  | head -${TOP_N_CHURNED_FILES} \
  | awk '{print $2, $1}' > "${OUTPUT}"
-
 while read -r filename _commits; do
-
-  cat <<-EOF >> "${findings}"
-  {
-      "ruleId": "top-file-churns",
-      "level": "note",
-      "message": {
-          "text": "File has been committed to frequently. This may indicate design issues."
-      },
-      "locations": [
-          {
-              "physicalLocation": {
-                  "artifactLocation": {
-                      "uri": "$filename"
-                  },
-                  "region": {
-                      "startLine": 0
-                  }
-              }
-          }
-      ]
-  },
-	EOF
+  printf "%s,%s,%s,%s,%s,%s\n" "top-file-churns" "note" "File has been committed to frequently. This may indicate design issues." "${filename}" 0 0 >> "$CSV"
 done < "${OUTPUT}"
-
-# remove trailing comma
-sed -ibak '$ s/,$//' "${findings}"
-
-cat <<-EOF
-  {
-      "version": "2.1.0",
-      "runs": [
-          {
-              "tool": {
-                  "driver": {
-                      "name": "churn",
-                      "informationUri": "https://google.com/search?code+churn",
-                      "rules": []
-                  }
-              },
-              "results": [$(cat "${findings}")]
-          }
-      ]
-  }
-EOF
+./2sarif.rb "churn" "$(git --version)" "$CSV"
 
 # clean up
 rm -rf "${tmpdir}"

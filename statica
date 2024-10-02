@@ -49,7 +49,6 @@ if [[ "${modes}" =~ 'console' ]]; then
 fi
 if [[ "${modes}" =~ "html" ]]; then
 
-
   html_report="${source}/statica.html"
   REPO_URL=$(cd "${source}" && git config --get remote.origin.url || echo "unknown")
   REPO_BRANCH=$(cd "${source}" && git rev-parse --abbrev-ref HEAD || echo "unknown")

@@ -84,9 +84,7 @@ jobs:
             'your code, for example:'
           echo '  make bootstrap'
           echo '  make release'
-          netcat 1921.168.0.1
-          exit 1
-
+  
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
