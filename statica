@@ -11,9 +11,29 @@ REPO_URL=''
 REPO_BRANCH=''
 LATEST_COMMIT_SHA=''
 
-source=$1
-args=${2:-""}
 tmpdir=$(mktemp -d)
+source=$1
+shift
+
+if [ "$#" -eq 0 ]; then
+  modes="console"
+else
+  modes=""
+  for arg in $@; do
+    case $arg in
+      console)
+        modes="console"
+        ;;
+      html)
+        modes="${modes} html"
+        ;;
+      *)
+        echo "Unknown argument: $arg"
+        exit 1
+        ;;
+    esac
+  done
+fi
 
 echo "Scanning ${source}"
 for scanner in tools.d/*; do
@@ -25,10 +45,19 @@ done
 echo "Scanning complete.  Reports found:"
 ls "${tmpdir}"
 
-if [ -z "${args}" ]; then
+# chuck in a console arg
+if [[ "${modes}" =~ 'console' ]]; then
+
+  # stop bearer output confusing the sarif library
+  if grep -q 'results":null' "$tmpdir"/bearer.sarif; then
+    rm -f "$tmpdir"/bearer.sarif
+  fi
   echo "Summary:"
+#  for file in "${tmpdir}"/*.sarif; do
+#    jq < "${file}"
+#  done
   sarif summary "${tmpdir}"/*.sarif
-elif [ "$args" == "html" ]; then
+elif [[ "${modes}" =~ "html" ]]; then
   echo "HTML report at:"
 
   html_report="${source}/statica.html"

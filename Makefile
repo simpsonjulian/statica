@@ -1,5 +1,6 @@
 test:
-	./statica . html
+	rspec .
+	./statica . html console
 
 clean:
 	rm -f *.html
