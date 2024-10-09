@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -euo pipefail
-which -s jscpd || exit 1
+which jscpd > /dev/null || exit 1
 npm ls -g | grep -q jscpd-sarif-reporter || exit 1
 
 MIN_LINES=15
