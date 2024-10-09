@@ -18,3 +18,7 @@ jobs:
       run: make acceptance
       env:
         GH_TOKEN: ${{ github.token }}
+    - uses: actions/upload-artifact@v4
+      with:
+        name: report
+        path: WebGoat/statica.html
