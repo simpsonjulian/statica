@@ -15,4 +15,4 @@ spec:
 acceptance:
 	./acceptance.sh
 
-.PHONEY: test clean test.html spec
+.PHONY: test clean test.html spec acceptance
