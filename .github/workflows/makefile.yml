@@ -18,6 +18,7 @@ jobs:
       run: make acceptance
       env:
         GH_TOKEN: ${{ github.token }}
+        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
     - uses: actions/upload-artifact@v4
       with:
         name: report
