@@ -90,7 +90,6 @@ class HtmlReport
   def generate
     @sarif = SarifFile.new(@sarif_spec)
     @results = @sarif.results
-    @severities = @results.map(&:severity).uniq
     self
   end
 

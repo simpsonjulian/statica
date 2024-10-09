@@ -95,10 +95,15 @@
 
     <% rules_and_descriptions(severity).each_pair do |rule_id, desc| %>
 
+      <% results_matching = results_matching(severity, rule_id) %>
 
-      <p class="collapsible active"> <b><%= rule_id %></b>: <%= desc %></p>
+      <p class="collapsible <%= results_matching.length <= 5 ? 'active' : '' %>">
+        <b><%= rule_id %></b>:
+        <%= desc %>
+        <strong>(<%= results_matching.length %>)</strong>
+      </p>
       <ul>
-        <% results_matching(severity, rule_id).each do |finding| %>
+        <% results_matching.each do |finding| %>
           <li>
             <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:<%= finding.linenum %>
           </li>
