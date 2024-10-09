@@ -4,6 +4,7 @@ test:
 
 clean:
 	rm -f *.html
+	rm -rf WebGoat
 
 test.html:
 	./html_report.rb spec test.html
@@ -11,5 +12,7 @@ test.html:
 spec:
 	rspec .
 
-.PHONEY: test clean test.html spec
+acceptance:
+	./acceptance.sh
 
+.PHONEY: test clean test.html spec
