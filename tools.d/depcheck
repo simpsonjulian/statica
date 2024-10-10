@@ -7,7 +7,7 @@ if [ -z "${NVD_API_KEY:-}" ]; then
     echo "Warning: NVD_API_KEY is not set.  This scan could be very slow." 1>&2
     nvd_arg=""
 else
-  nvd_arg="--nvdApiKey ${NVD_API_KEY}"
+    nvd_arg="--nvdApiKey ${NVD_API_KEY}"
 fi
 
 source=$1
@@ -16,6 +16,7 @@ out=$(mktemp -d)
 dependency-check -s "${source}" -o "${out}/report.sarif" \
                                 --format SARIF  \
                                 --enableRetired  \
-                                --nvdValidForHours 1000 "${nvd_arg}"> "${out}/log"
+                                # shellcheck disable=SC2086
+                                --nvdValidForHours 1000 ${nvd_arg} > "${out}/log"
 cat "${out}"/report.sarif
 rm -rf "${out}"

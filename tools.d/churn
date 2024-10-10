@@ -8,7 +8,6 @@ OUTPUT="${tmpdir}/churned"
 CSV="${tmpdir}/findings.csv"
 TOP_N_CHURNED_FILES=10
 
-
 git -C "${source}" log --format=format: --name-only --since=12.month \
  | grep -Ev '^$' \
  | sort \
@@ -16,6 +15,7 @@ git -C "${source}" log --format=format: --name-only --since=12.month \
  | sort -nr \
  | head -${TOP_N_CHURNED_FILES} \
  | awk '{print $2, $1}' > "${OUTPUT}"
+
 while read -r filename _commits; do
   printf "%s,%s,%s,%s,%s,%s\n" "top-file-churns" "note" "File has been committed to frequently. This may indicate design issues." "${filename}" 0 0 >> "$CSV"
 done < "${OUTPUT}"
