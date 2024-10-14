@@ -35,10 +35,16 @@ You'll also want Ruby 3.0.0 or later installed to do the HTML.
 # License
 This project is licensed under the MIT License.
 
+# TODO
+
+* add the tool name to the findings in the HTML report
+* report stats from the run
+
 # Future tools
 
 I'm thinking of adding:
 
 * shellcheck
 * action-lint
-* 
+* snyk
+* codeql

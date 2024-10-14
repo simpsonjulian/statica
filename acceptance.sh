@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 gh repo clone WebGoat/WebGoat
 
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
@@ -14,6 +15,6 @@ brew install semgrep \
     pmd \
     bearer/tap/bearer
 
-pip install sarif-tools
+pipx install sarif-tools
 
 ./statica WebGoat html

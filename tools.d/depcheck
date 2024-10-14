@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 set -euo pipefail
 which dependency-check > /dev/null || exit 1
 

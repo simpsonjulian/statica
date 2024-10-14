@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 which git > /dev/null || exit 1
 
 source=$1
@@ -15,8 +13,7 @@ git -C "${source}" log --format=format: --name-only --since=12.month \
  | sort \
  | uniq -c \
  | sort -nr \
- | head -${TOP_N_CHURNED_FILES} \
- | awk '{print $2, $1}' > "${OUTPUT}"
+ | awk -v n=${TOP_N_CHURNED_FILES} 'NR <= n {print $2, $1}' > "${OUTPUT}"
 
 while read -r filename _commits; do
   printf "%s,%s,%s,%s,%s,%s\n" "top-file-churns" "note" "File has been committed to frequently. This may indicate design issues." "${filename}" 0 0 >> "$CSV"
