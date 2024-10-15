@@ -8,7 +8,9 @@ usage() {
 }
 
 run_command() {
-  PATH="${app_dir}:${brew_prefix}/bin:${brew_prefix}/opt/statica/libexec/tools.d:$PATH" "$@"
+  local bin="${brew_prefix}/bin"
+  local libexec="${brew_prefix}/opt/statica/libexec:${PATH}"
+  PATH="${app_dir}:${bin}:${libexec}"
 }
 
 if [ $# -lt 2 ]; then
@@ -34,8 +36,15 @@ done
 
 
 modes="$@"
+
+if [ -d "${source}/tools.d" ]; then
+  tools_dir="${source}/tools.d"
+else
+  tools_dir="${brew_prefix}/opt/statica/libexec/tools.d"
+fi
+
 echo "Scanning ${source}"
-for scanner in tools.d/*; do
+for scanner in ${tools_dir}/*; do
   name=$(basename "${scanner}")
   report="${tmpdir}/${name}.sarif"
   echo "Running ${name} and reporting to ${report}"
