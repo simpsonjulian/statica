@@ -1,9 +1,14 @@
 #!/bin/bash
 
 set -euo pipefail
+
 usage() {
   echo "Usage: $0 <path to app source> [console|html]"
   exit 1
+}
+
+run_command() {
+  PATH="${app_dir}:${brew_prefix}/bin:${brew_prefix}/opt/statica/libexec/tools.d:$PATH" "$@"
 }
 
 if [ $# -lt 2 ]; then
@@ -15,6 +20,9 @@ REPO_BRANCH=''
 LATEST_COMMIT_SHA=''
 
 tmpdir=$(mktemp -d)
+app_dir="$(dirname $(readlink -f $0))"
+brew_prefix=$(brew --prefix)
+
 source=$1
 shift
 
@@ -31,7 +39,7 @@ for scanner in tools.d/*; do
   name=$(basename "${scanner}")
   report="${tmpdir}/${name}.sarif"
   echo "Running ${name} and reporting to ${report}"
-  bash "$scanner" "$source" > "${report}" || rm -f "${report}"
+  run_command "$scanner" "$source" > "${report}" || rm -f "${report}"
 done
 echo "Scanning complete.  Reports found:"
 ls "${tmpdir}"
@@ -57,7 +65,7 @@ if [[ "${modes}" =~ "html" ]]; then
 
   export REPO_URL REPO_BRANCH LATEST_COMMIT_SHA
 
-  ./html_report.rb "${tmpdir}" "${html_report}"
+  run_command html_report.rb "${tmpdir}" "${html_report}"
   echo "HTML report at:"
   echo "${html_report}"
 fi
