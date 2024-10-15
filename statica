@@ -37,8 +37,8 @@ done
 
 modes="$@"
 
-if [ -d "${source}/tools.d" ]; then
-  tools_dir="${source}/tools.d"
+if [ -d "${app_dir}/tools.d" ]; then
+  tools_dir="${app_dir}/tools.d"
 else
   tools_dir="${brew_prefix}/opt/statica/libexec/tools.d"
 fi
