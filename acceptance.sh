@@ -16,5 +16,6 @@ brew install semgrep \
     bearer/tap/bearer
 
 pipx install sarif-tools
+npm install -g jscpd-sarif-reporter
 
 ./statica WebGoat html
