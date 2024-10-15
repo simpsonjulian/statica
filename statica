@@ -10,7 +10,7 @@ usage() {
 run_command() {
   local bin="${brew_prefix}/bin"
   local libexec="${brew_prefix}/opt/statica/libexec:${PATH}"
-  PATH="${app_dir}:${bin}:${libexec}"
+  PATH="${app_dir}:${bin}:${libexec}" $@
 }
 
 if [ $# -lt 2 ]; then
