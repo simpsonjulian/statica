@@ -1,16 +1,24 @@
-# Statica
+# Statica SAST Tool
 
-Statica is a code quality and security scanning tool (for macOS and Linux). Statica can show output on CLI or generate an HTML report.
+Statica is Static Application Security Testing (SAST) tool for macOS and Linux.
 
-Statica is intended for situations where you can't compile the code, like:
+Statica is designed to be used in situations where you can't compile the code, like:
 
-* if you're looking at .NET Framework apps and you have a Mac
-* if there are binary dependencies you can't access
-* if the code doesn't compile
+* you're looking at .NET Framework apps, and you don't have a Windows computer
+* there are binary dependencies you can't access
+* the code doesn't compile
 
-## Prerequisites
+Statica will run other tools in the Homebrew ecosystem, and present a single report in console output or HTML.
 
-Ensure the following tools are installed and available in your `PATH`:
+## Installing
+
+Statica is builds upon the Homebrew ecosystem. If you have homebrew working on your computer, just run:
+
+```bash
+  brew install simpsonjulian/statica-tap/statica
+```
+
+If you want to run Statica locally, then you'll need to install the following tools:
 
 ```bash
 brew install semgrep \
@@ -27,10 +35,11 @@ You'll also want Ruby 3.0.0 or later installed to do the HTML.
 ## Usage
 
 ```bash
-./statica <path to app source> [html]
+statica <path to app source> [html|console]
 ```
 * <path to app source>: The directory containing the source code to be scanned.
 * [html]: Optional argument. If provided, an HTML report will be generated.
+* [console]: Optional argument. If provided, the report will be displayed in the console.
 
 # License
 This project is licensed under the MIT License.
