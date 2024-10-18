@@ -7,6 +7,7 @@ tmpdir=$(mktemp -d)
 OUTPUT="${tmpdir}/churned"
 CSV="${tmpdir}/findings.csv"
 TOP_N_CHURNED_FILES=10
+touch $CSV
 
 if [ -x "./csv2sarif.rb" ]; then
   csv2sarif="./csv2sarif.rb"
@@ -20,6 +21,7 @@ git -C "${source}" log --format=format: --name-only --since=12.month \
  | uniq -c \
  | sort -nr \
  | awk -v n=${TOP_N_CHURNED_FILES} 'NR <= n {print $2, $1}' > "${OUTPUT}"
+
 
 while read -r filename _commits; do
   printf "%s,%s,%s,%s,%s,%s\n" "top-file-churns" "note" "File has been committed to frequently. This may indicate design issues." "${filename}" 0 0 >> "$CSV"
