@@ -15,4 +15,7 @@ spec:
 acceptance:
 	./acceptance.sh
 
-.PHONY: test clean test.html spec acceptance
+live:
+	./live.sh
+
+.PHONY: test clean test.html spec acceptance live
