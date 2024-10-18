@@ -27,4 +27,4 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: report-${{ matrix.os }}
-        path: WebGoat/statica.html
+        path: /tmp/WebGoat/statica.html
