@@ -1,5 +1,4 @@
-name: Makefile CI
-
+name: Acceptance Tests
 on:
   push:
     branches: [ "main" ]
