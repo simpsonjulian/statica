@@ -5,11 +5,7 @@ which lizard > /dev/null || exit 1
 
 source=$1
 tmpdir=$(mktemp -d)
-if [ -x "./csv2sarif.rb" ]; then
-  csv2sarif="./csv2sarif.rb"
-else
-  csv2sarif="csv2sarif"
-fi
+brew_prefix=$(brew --prefix)
 
 choose() {
   local input=$1
@@ -23,12 +19,12 @@ lizard -w -o "${result}" "${source}" || true
 
 [ -s "$result" ] || exit 1
 
-awk -F':' '{print $2,$3, $1}' "${result}"| while read -r startline severity filename ; do
+awk -F':' '{print $2,$3, $1}' "${result}" | while read -r startline severity filename ; do
   printf "%s,%s,%s,%s,%s,%s\n" "complexity-above-15" "${severity}" "Function has a cyclomatic complexity value higher than 15" \
   "${filename}"  "${startline}"  0 >> "${tmpdir}"/findings.csv
 done
 
-$csv2sarif "lizard" "$(lizard --version)" "${tmpdir}/findings.csv"
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "lizard" "$(lizard --version)" "${tmpdir}/findings.csv"
 
 # clean up
 rm -rf "${tmpdir}"

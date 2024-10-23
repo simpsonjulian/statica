@@ -4,16 +4,12 @@ which git > /dev/null || exit 1
 
 source=$1
 tmpdir=$(mktemp -d)
+brew_prefix=$(brew --prefix)
+
 OUTPUT="${tmpdir}/churned"
 CSV="${tmpdir}/findings.csv"
 TOP_N_CHURNED_FILES=10
 touch $CSV
-
-if [ -x "./csv2sarif.rb" ]; then
-  csv2sarif="./csv2sarif.rb"
-else
-  csv2sarif="csv2sarif"
-fi
 
 git -C "${source}" log --format=format: --name-only --since=12.month \
  | grep -Ev '^$' \
@@ -27,7 +23,7 @@ while read -r filename _commits; do
   printf "%s,%s,%s,%s,%s,%s\n" "top-file-churns" "note" "File has been committed to frequently. This may indicate design issues." "${filename}" 0 0 >> "$CSV"
 done < "${OUTPUT}"
 
-$csv2sarif "churn" "$(git --version)" "$CSV"
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "churn" "$(git --version)" "$CSV"
 
 # clean up
 rm -rf "${tmpdir}"
