@@ -56,9 +56,14 @@
           font-weight: bold;
           margin: 20px 0 10px;
       }
-
+      .header-container {
+          display: flex;
+          justify-content: center;
+          margin: auto;
+      }
       .header {
-          text-align: center;
+          text-align: left;
+          display: inline-block;
           padding: 20px;
           margin-bottom: 20px;
           background-color: #f4f4f4;
@@ -75,6 +80,9 @@
 </head>
 <body>
 <div class="container">
+  <div class="header-container">
+
+
   <div class="header">
 
 
@@ -83,8 +91,9 @@
     <p><strong>Repo Branch:</strong> <%= ENV['REPO_BRANCH'] %></p>
     <p><strong>Latest Commit SHA:</strong> <%= ENV['LATEST_COMMIT_SHA'] %></p>
     <p><strong>Scan Date:</strong> <%= @scan_date %></p>
+    <p><strong>Tools used:</strong> <%= @tools.join(", ") %></p>
   </div>
-
+  </div>
 
 
   <% severities.each do |severity| %>

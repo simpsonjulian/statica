@@ -4,24 +4,25 @@ set -euo pipefail
 which pmd > /dev/null || exit 1
 
 source=$1
-pmd_version=$(pmd --version | grep PMD | awk '{print $2}')
-brew_prefix=$(brew --prefix)
 set -eo pipefail
 
+pmd_version=$(pmd --version | grep PMD | awk '{print $2}')
+brew_prefix=$(brew --prefix)
 tmpdir=$(mktemp -d)
-
-
+output_csv="${tmpdir}/output.csv"
+findings_csv="${tmpdir}/findings.csv"
+touch "${findings_csv}"
 for language in cpp cs java python ruby typescript; do
     pmd cpd --minimum-tokens=100 -l $language -d "$source" --no-fail-on-error --ignore-identifiers -f csv | \
     grep -v "lines,tokens,occurrences" \
-    >> "${tmpdir}/output.csv" || true
+    >> "${output_csv}" || true
 done
 
-awk -F ',' '{print $1, $4, $5}' "${tmpdir}/output.csv" | while read -r lines start_line file; do
+awk -F ',' '{print $1, $4, $5}' "${output_csv}" | while read -r lines start_line file; do
     end_line=$(($start_line + $lines))
-    printf "duplication,note,code duplication found in source files,%s,%s,%s\n" "${file}" "${start_line}" "${end_line}"  >> "${tmpdir}/findings.csv"
+    printf "duplication,note,code duplication found in source files,%s,%s,%s\n" "${file}" "${start_line}" "${end_line}"  >> "${findings_csv}"
 done
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "pmd-cp" "${pmd_version}" "${tmpdir}/findings.csv"
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "pmd-cp" "${pmd_version}" "${findings_csv}"
 
 rm -rf "${tmpdir}"

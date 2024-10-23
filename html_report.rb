@@ -8,6 +8,7 @@ require 'cgi/util'
 
 # loads and represents one of more SARIF files
 class SarifFile
+  attr_reader :report
   def initialize(path)
     @report = get_sarifs(path)
   end
@@ -85,37 +86,32 @@ class HtmlReport
     @severities = %w[error warning note]
     @content = []
     @scan_date = Time.now
+    @tools = []
   end
 
   def generate
     @sarif = SarifFile.new(@sarif_spec)
     @results = @sarif.results
-    self
-  end
 
-  # jscpd has a single rule, which can spam the result page.
-  # should probably fix this in `tools.d/jscpd`
-  def cope_with_jscpd(result)
-    description = result.description
-    rule_id = result.rule_id
-    language = nil
-    description.match(/Clone detected in (\w+)/) { |m| language = m[1] }
-    final_rule_id = rule_id == 'duplication' ? "duplication.#{language}" : rule_id
-    [description, final_rule_id]
+    @sarif.report.each do |report|
+      tool_name = report.runs.first.tool.driver.name
+      @tools << tool_name
+    end
+    self
   end
 
   def results_matching(severity, rule_id)
     @results.select do |result|
-      _description, final_rule_id = cope_with_jscpd(result)
-      result.severity == severity && final_rule_id == rule_id
+      _description = result.description
+      rule_id = result.rule_id
+      result.severity == severity && result.rule_id == rule_id
     end
   end
 
   def rules_and_descriptions(severity)
     @results.select { |e| e.severity == severity }.map do |result|
-      description, final_rule_id = cope_with_jscpd(result)
 
-      [final_rule_id, description]
+      [result.rule_id, result.description]
     end.uniq.to_h
   end
 
