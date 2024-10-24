@@ -103,14 +103,12 @@ class HtmlReport
   def results_matching(severity, rule_id)
     @results.select do |result|
       _description = result.description
-      rule_id = result.rule_id
       result.severity == severity && result.rule_id == rule_id
     end
   end
 
   def rules_and_descriptions(severity)
     @results.select { |e| e.severity == severity }.map do |result|
-
       [result.rule_id, result.description]
     end.uniq.to_h
   end

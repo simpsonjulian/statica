@@ -91,6 +91,7 @@
     <p><strong>Repo Branch:</strong> <%= ENV['REPO_BRANCH'] %></p>
     <p><strong>Latest Commit SHA:</strong> <%= ENV['LATEST_COMMIT_SHA'] %></p>
     <p><strong>Scan Date:</strong> <%= @scan_date %></p>
+    <p><strong>Findings:</strong> <%= @results.length %></p>
     <p><strong>Tools used:</strong> <%= @tools.join(", ") %></p>
   </div>
   </div>
