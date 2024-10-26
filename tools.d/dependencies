@@ -1,1 +1,80 @@
-../experimental.d/dependencies
+#!/bin/bash
+
+# finds jar files or dlls that are checked into git repo, and checks if they are available in nuget
+# then reports via sarif format
+# usage: dependencies <path to repo>
+
+
+# rule: checked in dependencies
+# rule: vendor dependencies in repo
+set -euo pipefail
+which git > /dev/null || exit 1
+which dotnet > /dev/null || exit 1
+which unzip > /dev/null || exit 1
+
+source=$1
+tmp=$(mktemp -d)
+brew_prefix=$(brew --prefix)
+findings_csv="${tmp}/findings.csv"
+
+cat <<-EOF > "${tmp}/dll.fsx"
+  if fsi.CommandLineArgs.Length < 2 then
+      System.Console.Error.WriteLine("Please supply assembly path")
+      exit 1
+  let arg = fsi.CommandLineArgs.[1]
+  System.Console.WriteLine(arg)
+  System.Console.WriteLine(System.Reflection.AssemblyName.GetAssemblyName(arg).ToString())
+EOF
+
+
+dll_assembly_info() {
+  local dll=$1
+  dotnet fsi "${tmp}/dll.fsx" "$dll"
+}
+
+jar_manifest_info() {
+  local jar=$1
+  # use unzip to extract the META-INF/MANIFEST.MF file
+  unzip -p "$jar" META-INF/MANIFEST.MF | grep -E 'Implementation-Version|Implementation-Vendor'
+}
+
+report() {
+  local rule=$1
+  local description=$2
+  local file=$3
+  printf "%s,note,%s,%s,%s,%s\n" "$rule" "$description" "${file}" 0 0  >> "${findings_csv}"
+}
+
+check_dll() {
+  local file=$1
+  # ensure that the file isn't System. or Web.
+  # but report a more specific thing if it's a framework dependency
+  dll_assembly_info "$source/$file" | grep -qE '^System.|^Web.|^Microsoft'
+}
+
+check_jar() {
+  local file=$1
+  # check if the jar is a known third party dependency
+  # report if it is
+  jar_manifest_info "$source/$file" | grep -iqE 'apache|google|sun|oracle'
+}
+
+(cd "$source" && git ls-files | grep -E '\.jar$|\.dll$') | while read -r file; do
+
+  if [[ $file =~ \.dll ]] && check_dll "${file}"; then
+    report "checked-in-framework-dependencies" "Framework dependencies checked in to source control" "${file}"
+   elif [[ $file =~ \.jar ]] && check_jar "${file}"; then
+    report "checked-in-thirdparty-dependencies" "Third party dependencies checked in to source control" "${file}"
+  else
+    report "checked-in-dependencies" "dependencies checked in to source control" "${file}"
+   fi
+
+done
+
+find "$source" -iname "packages.config" | while read -r file; do
+  report "old-nuget-configuration" "Nuget dependencies should be declared in a PackageResource" "${file}"
+done
+
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "depenencies" "0.1" "${findings_csv}"
+
+rm -rf "${tmp}"
