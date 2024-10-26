@@ -71,6 +71,10 @@ check_jar() {
 
 done
 
+find "$source" -iname "packages.config" | while read -r file; do
+  report "old-nuget-configuration" "Nuget dependencies should be declared in a PackageResource" "${file}"
+done
+
 PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "depenencies" "0.1" "${findings_csv}"
 
 rm -rf "${tmp}"
