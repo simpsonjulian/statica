@@ -23,7 +23,7 @@ RSpec.describe 'HtmlReport' do
     it 'handles a directory of one or more sarif files' do
       report = HtmlReport.new("spec", nil)
       report.generate
-      expect(report.results.first.description.split("\n")[0]).to match "Suspicious use of netcat with IP address"
+      expect(report.results.first.description.split("\n")[0]).to match "Usage of hard-coded secret"
     end
 
     it 'publishes a simple html report' do

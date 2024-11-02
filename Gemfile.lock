@@ -10,7 +10,6 @@ GEM
     rainbow (3.1.1)
     regexp_parser (2.7.0)
     rexml (3.3.6)
-      strscan
     rspec (3.13.0)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -37,11 +36,11 @@ GEM
     rubocop-ast (1.28.0)
       parser (>= 3.2.1.0)
     ruby-progressbar (1.13.0)
-    strscan (3.1.0)
     unicode-display_width (2.4.2)
 
 PLATFORMS
   arm64-darwin-21
+  arm64-darwin-22
   x86_64-linux
 
 DEPENDENCIES

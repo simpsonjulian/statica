@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# finds jar files or dlls that are checked into git repo, and checks if they are available in nuget
+# finds jar csproj_files or dlls that are checked into git repo, and checks if they are available in nuget
 # then reports via sarif format
 # usage: dependencies <path to repo>
 
 
-# rule: checked in dependencies
-# rule: vendor dependencies in repo
 set -euo pipefail
 which git > /dev/null || exit 1
 which dotnet > /dev/null || exit 1
@@ -47,7 +45,7 @@ report() {
 
 check_dll() {
   local file=$1
-  # ensure that the file isn't System. or Web.
+  # ensure that the csproj_file isn't System. or Web.
   # but report a more specific thing if it's a framework dependency
   dll_assembly_info "$source/$file" | grep -qE '^System.|^Web.|^Microsoft'
 }
@@ -59,22 +57,53 @@ check_jar() {
   jar_manifest_info "$source/$file" | grep -iqE 'apache|google|sun|oracle'
 }
 
-(cd "$source" && git ls-files | grep -E '\.jar$|\.dll$') | while read -r file; do
+find_package_config_files() {
+  find "$source" -iname "packages.config" | while read -r file; do
+    report "old-nuget-configuration" "Nuget dependencies should be declared in a PackageResource" "${file}"
+  done
+}
 
-  if [[ $file =~ \.dll ]] && check_dll "${file}"; then
-    report "checked-in-framework-dependencies" "Framework dependencies checked in to source control" "${file}"
-   elif [[ $file =~ \.jar ]] && check_jar "${file}"; then
-    report "checked-in-thirdparty-dependencies" "Third party dependencies checked in to source control" "${file}"
-  else
-    report "checked-in-dependencies" "dependencies checked in to source control" "${file}"
-   fi
+process_hint_paths() {
+  local csproj_file=$1
 
+  grep -E '<HintPath>.*</HintPath>' "$csproj_file" | while read -r hint_path_entry; do
+    proj_dir=$(dirname "$csproj_file")
+    hintpath=$(echo "$hint_path_entry" | sed -E 's/.*<HintPath>(.*)<\/HintPath>.*/\1/' | sed -E 's/\\/\//g')
+    if [[ ! -f "${proj_dir}/$hintpath" ]]; then
+       report "hintpath-missing-file" "Missing DLL in Hint Path" "${csproj_file}"
+    fi
+  done
+}
+
+look_for_dependencies_in_source() {
+  (cd "$source" && git ls-files | grep -E '\.jar$|\.dll$') | while read -r file; do
+
+    if [[ $file =~ \.dll ]] && check_dll "${file}"; then
+      report "checked-in-framework-dependencies" "Framework dependencies checked in to source control" "${file}"
+     elif [[ $file =~ \.jar ]] && check_jar "${file}"; then
+      report "checked-in-thirdparty-dependencies" "Third party dependencies checked in to source control" "${file}"
+    else
+      report "checked-in-dependencies" "dependencies checked in to source control" "${file}"
+     fi
+
+  done
+}
+
+look_for_busted_hint_paths() {
+# is there a csproj csproj_file with a Resource declared that has a HintPath attribute?  And does the Hintpath exist?
+# then does the Resource version match the version from the artifact in the HintPath?
+
+find "$source" -iname "*.csproj" | while read -r csproj_file; do
+  if grep -qi HintPath "$csproj_file"; then
+    process_hint_paths "$csproj_file"
+  fi
 done
+}
 
-find "$source" -iname "packages.config" | while read -r file; do
-  report "old-nuget-configuration" "Nuget dependencies should be declared in a PackageResource" "${file}"
-done
+look_for_busted_hint_paths
+find_package_config_files
+look_for_dependencies_in_source
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "depenencies" "0.1" "${findings_csv}"
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "dependencies" "0.1" "${findings_csv}"
 
 rm -rf "${tmp}"

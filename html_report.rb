@@ -100,6 +100,9 @@ class HtmlReport
     self
   end
 
+
+  # add in tool
+  #
   def results_matching(severity, rule_id)
     @results.select do |result|
       _description = result.description
@@ -115,7 +118,7 @@ class HtmlReport
 
   def publish
     # generate erb template and write to the file from destination_path
-    File.open(@dest_path, 'w') do |file|
+    File.open(@dest_path, 'w+') do |file|
       html = ERB.new(self.class.template).result(binding)
       file.write(html)
     end
