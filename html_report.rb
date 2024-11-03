@@ -44,7 +44,8 @@ class SarifFile
                      description: CGI::escapeHTML(result.message.text),
                      linenum: region ? region.startLine : 0,
                      file_url: result.locations[0].physicalLocation.artifactLocation.uri,
-                     rule_id: rule_id })
+                     rule_id: rule_id,
+                     tool: report.runs.first.tool.driver.name })
   end
 
   def results
@@ -101,8 +102,6 @@ class HtmlReport
   end
 
 
-  # add in tool
-  #
   def results_matching(severity, rule_id)
     @results.select do |result|
       _description = result.description

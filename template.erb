@@ -56,11 +56,13 @@
           font-weight: bold;
           margin: 20px 0 10px;
       }
+
       .header-container {
           display: flex;
           justify-content: center;
           margin: auto;
       }
+
       .header {
           text-align: left;
           display: inline-block;
@@ -83,17 +85,18 @@
   <div class="header-container">
 
 
-  <div class="header">
+    <div class="header">
 
 
-    <h1>Statica AppSec Findings</h1>
-    <p><strong>Repository URL:</strong> <a href="<%= ENV['REPO_URL'] %>" target="_blank"><%= ENV['REPO_URL'] %></a></p>
-    <p><strong>Repo Branch:</strong> <%= ENV['REPO_BRANCH'] %></p>
-    <p><strong>Latest Commit SHA:</strong> <%= ENV['LATEST_COMMIT_SHA'] %></p>
-    <p><strong>Scan Date:</strong> <%= @scan_date %></p>
-    <p><strong>Findings:</strong> <%= @results.length %></p>
-    <p><strong>Tools used:</strong> <%= @tools.join(", ") %></p>
-  </div>
+      <h1>Statica AppSec Findings</h1>
+      <p><strong>Repository URL:</strong> <a href="<%= ENV['REPO_URL'] %>" target="_blank"><%= ENV['REPO_URL'] %></a>
+      </p>
+      <p><strong>Repo Branch:</strong> <%= ENV['REPO_BRANCH'] %></p>
+      <p><strong>Latest Commit SHA:</strong> <%= ENV['LATEST_COMMIT_SHA'] %></p>
+      <p><strong>Scan Date:</strong> <%= @scan_date %></p>
+      <p><strong>Findings:</strong> <%= @results.length %></p>
+      <p><strong>Tools used:</strong> <%= @tools.join(", ") %></p>
+    </div>
   </div>
 
 
@@ -107,15 +110,17 @@
 
       <% results_matching = results_matching(severity, rule_id) %>
 
-      <p class="collapsible <%= results_matching.length <= 5 ? 'active' : '' %>">
-        <b><%= rule_id %></b>:
-        <%= desc %>
-        <strong>(<%= results_matching.length %>)</strong>
-      </p>
+   <p class="collapsible <%= results_matching.length <= 5 ? 'active' : '' %>">
+      <b><%= rule_id %></b>:
+      <%= desc %>
+      <em>[ <%= results_matching.first.tool %>] </em>
+      <strong>(<%= results_matching.length %>)</strong>
+    </p>
+
       <ul>
         <% results_matching.each do |finding| %>
           <li>
-            <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a>:<%= finding.linenum %>
+            <a href="<%= finding.file_url %>" target="_blank"><%= finding.file_url %></a><%= finding.linenum > 0 ? ":#{finding.linenum}" : nil %>
           </li>
         <% end %>
       </ul>

@@ -73,6 +73,10 @@ RSpec.describe 'SarifReport' do
       expect(sarif_file.results.first.rule_id).to eq "no-unused-vars"
     end
 
+    it 'has a tool name' do
+      expect(sarif_file.results.first.tool).to eq "ESLint"
+    end
+
     it 'copes with codeql sarif output' do
       sarif_file = SarifFile.new("spec/webgoat_codeql.sarif")
       expect(sarif_file.results.first.description).to match /This data transmitted to the user depends on \[sensitive information\].*/
