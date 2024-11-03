@@ -35,6 +35,8 @@ GEM
       unicode-display_width (>= 2.4.0, < 3.0)
     rubocop-ast (1.28.0)
       parser (>= 3.2.1.0)
+    ruby-graphviz (1.2.5)
+      rexml
     ruby-progressbar (1.13.0)
     unicode-display_width (2.4.2)
 
@@ -46,6 +48,7 @@ PLATFORMS
 DEPENDENCIES
   rspec (~> 3.13)
   rubocop
+  ruby-graphviz
 
 BUNDLED WITH
    2.2.33

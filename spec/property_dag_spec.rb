@@ -1,4 +1,5 @@
 require_relative 'spec_helper'
+require 'ruby-graphviz'
 
 class Node
   attr_reader :name, :properties
@@ -77,6 +78,18 @@ class PropertyDag
     end
   end
 
+  def to_png(filename)
+    g = GraphViz.new( :G, :type => :digraph )
+    @nodes.each do |node|
+      g.add_nodes(node.name)
+    end
+    @relationships.each do |rel|
+      g.add_edges(rel.from.name, rel.to.name)
+    end
+    g.output( :png => filename )
+
+  end
+
 end
 
 RSpec.describe PropertyDag do
@@ -121,6 +134,25 @@ RSpec.describe PropertyDag do
     graph_find_nodes_by_degree = graph.find_nodes_by_degree(3)
     expect(graph_find_nodes_by_degree.first.to.name).to eq 'foo.js'
     expect(graph_find_nodes_by_degree.last.to.name).to eq 'bar.js'
+  end
+
+  it 'generates a graphviz png' do
+    graph = PropertyDag.new
+    graph.add_node('foo.js', {})
+    graph.add_node('bar.js', {})
+    graph.add_node('Lizard', {})
+    graph.add_node('Checkov', {})
+    graph.add_node('Valgrind', {})
+
+    graph.add_relationship('Checkov', 'foo.js')
+    graph.add_relationship('Lizard', 'foo.js')
+    graph.add_relationship('Checkov', 'bar.js')
+    graph.add_relationship('Lizard', 'bar.js')
+    graph.add_relationship('Valgrind', 'bar.js')
+
+    graph.to_png('test.png')
+
+
   end
 
 end
