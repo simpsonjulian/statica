@@ -104,6 +104,6 @@ look_for_busted_hint_paths
 find_package_config_files
 look_for_dependencies_in_source
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "dependencies" "0.1" "${findings_csv}"
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "Statica Dependencies" "0.1" "${findings_csv}"
 
 rm -rf "${tmp}"

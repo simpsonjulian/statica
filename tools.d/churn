@@ -23,7 +23,7 @@ while read -r filename _commits; do
   printf "%s,%s,%s,%s,%s,%s\n" "top-file-churns" "note" "File has been committed to frequently. This may indicate design issues." "${filename}" 0 0 >> "$CSV"
 done < "${OUTPUT}"
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "churn" "$(git --version)" "$CSV"
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "Statica Churn" "$(git --version)" "$CSV"
 
 # clean up
 rm -rf "${tmpdir}"
