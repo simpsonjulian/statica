@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -euo pipefail
+which dependency-check > /dev/null || exit 1
+
+source=$1
+
+out=$(mktemp -d)
+dependency-check -s "${source}" -o "${out}/report.sarif" \
+                                --format SARIF  \
+                                --retireJsForceUpdate \
+                                --noupdate > "${out}/log"
+cat "${out}"/report.sarif
+rm -rf "${out}"
