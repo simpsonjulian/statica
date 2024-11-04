@@ -9,7 +9,7 @@ out=$(mktemp -d)
 dependency-check -s "${source}" -o "${out}/report.sarif" \
                                 --format SARIF  \
                                 --retireJsForceUpdate \
-                                --noupdate > "${out}/log"
+                                --noupdate 1>&2
 cat "${out}"/report.sarif
-cat "${out}"/log 1>&2
+
 rm -rf "${out}"

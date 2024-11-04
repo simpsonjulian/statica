@@ -44,11 +44,19 @@ else
 fi
 
 echo "Scanning ${source}"
-for scanner in ${tools_dir}/*; do
+for scanner in "${tools_dir}"/*; do
   name=$(basename "${scanner}")
   report="${tmpdir}/${name}.sarif"
-  echo "Running ${name} and reporting to ${report}"
-  run_command "$scanner" "$source" > "${report}" || rm -f "${report}"
+  echo -n "Running ${name} ... "
+
+  run_command "$scanner" "$source" > "${report}" || {
+    echo "[NOT OK] There was an error running ${name}. No report saved."
+    rm -f "${report}"
+    continue
+  }
+  chars=$(wc -c < "${report}"| tr -d " ")
+  echo "[OK] Ran ${name} and put ${chars} characters of sarif file in ${report}"
+
 done
 echo "Scanning complete.  Reports found:"
 ls "${tmpdir}"
