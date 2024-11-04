@@ -11,4 +11,5 @@ dependency-check -s "${source}" -o "${out}/report.sarif" \
                                 --retireJsForceUpdate \
                                 --noupdate > "${out}/log"
 cat "${out}"/report.sarif
+cat "${out}"/log 1>&2
 rm -rf "${out}"
