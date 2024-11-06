@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+which retire > /dev/null || exit 1
+
+source=$1
+
+tmpdir=$(mktemp -d)
+
+retire --exitwith 0 --outputformat json --outputpath "${tmpdir}/report.json" "${source}" 1>&2
+
+# Iterate over files and their vulnerabilities to produce a CSV
+jq --raw-output '.data[] | .file as $file | .results[] | .vulnerabilities[] | ["vulnerable-js-file", .severity, .identifiers.CVE[0] + " -" + .identifiers.summary, $file, 0, 0] | @csv' < "${tmpdir}/report.json" > "${tmpdir}/findings.csv"
+
+brew_prefix=$(brew --prefix)
+PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "retirejs" "$(retire --version)" "${tmpdir}/findings.csv"
+
+# Clean up
+rm -rf "${tmpdir}"

@@ -6,6 +6,6 @@ which checkov > /dev/null || exit 1
 source=$1
 
 out=$(mktemp -d)
-checkov --quiet -d "${source}" -o sarif --output-file-path "${out}" 1>&2
+checkov --soft-fail --quiet -d "${source}" -o sarif --output-file-path "${out}" 1>&2
 cat "${out}/results_sarif.sarif"
 rm -rf "${out}"

@@ -22,7 +22,8 @@ If you want to run Statica locally, then you'll need to install the following to
 
 ```bash
 brew install semgrep \
-    dependency-check \
+    jq \
+    retire \
     trivy \
     sarif \
     lizard-analyzer \
@@ -45,8 +46,6 @@ statica <path to app source> [html|console]
 This project is licensed under the MIT License.
 
 # TODO
-
-* add the tool name to the findings in the HTML report
 * report stats from the run
 
 # Future tools

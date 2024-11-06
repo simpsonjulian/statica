@@ -6,10 +6,21 @@ tool_name, tool_version, findings_csv = ARGV
 
 results = []
 
+def severity_to_level(severity)
+  mapping = {
+    'info' => 'note',
+    'low' => 'note',
+    'medium' => 'warning',
+    'high' => 'error',
+    'critical' => 'error'
+  }
+  mapping.key?(severity) ? mapping[severity] : severity
+end
+
 def add_result(rule_id, level, message, uri, start_line, end_line)
   {
     "ruleId": rule_id,
-    "level": level,
+    "level": severity_to_level(level),
     "message": {
       "text": message
     },
@@ -29,16 +40,16 @@ def add_result(rule_id, level, message, uri, start_line, end_line)
   }
 end
 
-sarif_data = { :$schema => "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-           :version => "2.1.0",
-           :runs => [
-             { tool: { driver: { name: tool_name,
-                                       version: tool_version,
-                                       informationUri: "https://github.com/simpsonjulian/statica",
-                                       rules: [],
-                                       organization: "simpsonjulian" } },
-               results: [] }
-           ] }
+sarif_data = { :$schema => 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+               :version => '2.1.0',
+               :runs => [
+                 { tool: { driver: { name: tool_name,
+                                     version: tool_version,
+                                     informationUri: 'https://github.com/simpsonjulian/statica',
+                                     rules: [],
+                                     organization: 'simpsonjulian' } },
+                   results: [] }
+               ] }
 
 CSV.foreach(findings_csv) do |row|
   results << add_result(*row)
