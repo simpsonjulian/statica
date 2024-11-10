@@ -1,6 +1,6 @@
 # Statica SAST Tool
 
-Statica is Static Application Security Testing (SAST) tool for macOS and Linux.
+Statica is a Static Application Security Testing (SAST) tool for macOS and Linux.
 
 Statica is designed to be used in situations where you can't compile the code, like:
 
@@ -12,7 +12,7 @@ Statica will run other tools in the Homebrew ecosystem, and present a single rep
 
 ## Installing
 
-Statica is builds upon the Homebrew ecosystem. If you have homebrew working on your computer, just run:
+Statica builds upon the Homebrew ecosystem. If you have homebrew working on your computer, just run:
 
 ```bash
   brew install simpsonjulian/statica-tap/statica
@@ -46,11 +46,10 @@ statica <path to app source> [html|console]
 This project is licensed under the MIT License.
 
 # TODO
-* report stats from the run
+* report stats from the run for aggregation
+* report on the most problematic files
 
 # Future tools
-
-I'm thinking of adding:
 
 * shellcheck
 * action-lint
