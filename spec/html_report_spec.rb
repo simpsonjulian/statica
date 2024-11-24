@@ -44,6 +44,32 @@ RSpec.describe 'HtmlReport' do
       expect(report.rules_and_descriptions("warning")["AVD-AWS-0077"].split("\n")[0]).to match "Artifact: https:/github.com/terraform-aws-modules/terraform-aws-rds?ref=v2.0.0/modules/db_instance/main.tf"
     end
 
+    it 'gives you a plain local url' do
+      plain_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", nil)
+      expect(plain_url).to eq "file:///foo/bar"
+    end
+
+    it 'gives you a vim url' do
+      vim_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", :vim)
+      expect(vim_url).to eq "mvim://open?url=file:///foo/bar"
+
+    end
+
+    it 'gives you a vscode url' do
+      vscode_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", :vscode)
+      expect(vscode_url).to eq "vscode://open?url=file:///foo/bar"
+    end
+
+    it 'can find a command' do
+      expect(HtmlReport.new(nil, nil).command_exists('sh')).to eq true
+    end
+
+    it 'gives a fully qualified path if needed' do
+      url = HtmlReport.new(nil, nil).get_url_for_browser("foo.html",nil)
+      expect(url).to start_with "file:///"
+      expect(url).not_to eq "file://foo.html"
+    end
+
   end
 end
 

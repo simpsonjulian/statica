@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'English'
 require 'json'
 require 'ostruct'
 require 'erb'
@@ -9,6 +10,7 @@ require 'cgi/util'
 # loads and represents one of more SARIF files
 class SarifFile
   attr_reader :report
+
   def initialize(path)
     @report = get_sarifs(path)
   end
@@ -27,7 +29,7 @@ class SarifFile
         end
       end
 
-    elsif driver.rules && driver.rules.length > 0  # severity in the rule
+    elsif driver.rules&.length&.positive? # severity in the rule
       rule = driver.rules.select { |r| r.id == rule_id }.first
       rule.defaultConfiguration.level
     else
@@ -41,7 +43,7 @@ class SarifFile
     run = report.runs.first
 
     OpenStruct.new({ severity: find_severity(result, run),
-                     description: CGI::escapeHTML(result.message.text),
+                     description: CGI.escapeHTML(result.message.text),
                      linenum: region ? region.startLine : 0,
                      file_url: result.locations[0].physicalLocation.artifactLocation.uri,
                      rule_id: rule_id,
@@ -57,7 +59,6 @@ class SarifFile
       output += results.map do |result|
         format_result(result, report)
       end
-
     end
     output
   end
@@ -101,7 +102,6 @@ class HtmlReport
     self
   end
 
-
   def results_matching(severity, rule_id)
     @results.select do |result|
       _description = result.description
@@ -113,6 +113,33 @@ class HtmlReport
     @results.select { |e| e.severity == severity }.map do |result|
       [result.rule_id, result.description]
     end.uniq.to_h
+  end
+
+  def get_url_for_browser(file_path, mode)
+    file_path = "#{Dir.pwd}/#{file_path}" unless file_path.start_with?('/')
+
+    if mode == :vim
+      "mvim://open?url=file://#{file_path}"
+    elsif mode == :vscode
+      "vscode://open?url=file://#{file_path}"
+    else
+      "file://#{file_path}"
+    end
+  end
+
+  def command_exists(command)
+    `command -v #{command}`
+    $CHILD_STATUS.success?
+  end
+
+  def get_url(url)
+    if command_exists('mvim')
+      get_url_for_browser(url, :vim)
+    elsif command_exists('code')
+      get_url_for_browser(url, :vscode)
+    else
+      get_url_for_browser(url, nil)
+    end
   end
 
   def publish
