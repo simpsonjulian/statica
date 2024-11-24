@@ -128,7 +128,7 @@ class HtmlReport
   end
 
   def command_exists(command)
-    `command -v #{command}`
+    `which -s #{command}`
     $CHILD_STATUS.success?
   end
 
