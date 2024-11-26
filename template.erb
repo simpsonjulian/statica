@@ -120,7 +120,7 @@
       <ul>
         <% results_matching.each do |finding| %>
           <li>
-            <a href="<%= get_url(finding.file_url) %>" target="_blank"><%= finding.file_url %></a><%= finding.linenum > 0 ? ":#{finding.linenum}" : nil %>
+            <a href="<%= get_url(finding.file_url, finding.linenum) %>" target="_blank"><%= finding.file_url %></a><%= finding.linenum > 0 ? ":#{finding.linenum}" : nil %>
           </li>
         <% end %>
       </ul>

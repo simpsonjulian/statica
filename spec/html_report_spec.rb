@@ -45,18 +45,18 @@ RSpec.describe 'HtmlReport' do
     end
 
     it 'gives you a plain local url' do
-      plain_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", nil)
+      plain_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", nil, nil)
       expect(plain_url).to eq "file:///foo/bar"
     end
 
     it 'gives you a vim url' do
-      vim_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", :vim)
-      expect(vim_url).to eq "mvim://open?url=file:///foo/bar"
+      vim_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", :vim, 26)
+      expect(vim_url).to eq "mvim://open?url=file:///foo/bar&line=26"
 
     end
 
     it 'gives you a vscode url' do
-      vscode_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", :vscode)
+      vscode_url = HtmlReport.new(nil, nil).get_url_for_browser("/foo/bar", :vscode, 26 )
       expect(vscode_url).to eq "vscode://open?url=file:///foo/bar"
     end
 
@@ -65,7 +65,7 @@ RSpec.describe 'HtmlReport' do
     end
 
     it 'gives a fully qualified path if needed' do
-      url = HtmlReport.new(nil, nil).get_url_for_browser("foo.html",nil)
+      url = HtmlReport.new(nil, nil).get_url_for_browser("foo.html", nil,nil)
       expect(url).to start_with "file:///"
       expect(url).not_to eq "file://foo.html"
     end

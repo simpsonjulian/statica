@@ -115,11 +115,12 @@ class HtmlReport
     end.uniq.to_h
   end
 
-  def get_url_for_browser(file_path, mode)
+  def get_url_for_browser(file_path, mode, line)
     file_path = "#{Dir.pwd}/#{file_path}" unless file_path.start_with?('/')
 
     if mode == :vim
-      "mvim://open?url=file://#{file_path}"
+      extra_param = line ? "&line=#{line}" : ''
+      "mvim://open?url=file://#{file_path}" + extra_param
     elsif mode == :vscode
       "vscode://open?url=file://#{file_path}"
     else
@@ -132,13 +133,13 @@ class HtmlReport
     $CHILD_STATUS.success?
   end
 
-  def get_url(url)
+  def get_url(url, line)
     if command_exists('mvim')
-      get_url_for_browser(url, :vim)
+      get_url_for_browser(url, :vim, line)
     elsif command_exists('code')
-      get_url_for_browser(url, :vscode)
+      get_url_for_browser(url, :vscode, line)
     else
-      get_url_for_browser(url, nil)
+      get_url_for_browser(url, nil, nil)
     end
   end
 
