@@ -7,7 +7,7 @@ source=$1
 
 tmpdir=$(mktemp -d)
 
-retire --exitwith 0 --outputformat json --outputpath "${tmpdir}/report.json" "${source}" 1>&2
+retire --exitwith 0 --outputformat json --outputpath "${tmpdir}/report.json" --path "${source}" 1>&2
 
 # Iterate over files and their vulnerabilities to produce a CSV
 jq --raw-output '.data[] | .file as $file | .results[] | .vulnerabilities[] | ["vulnerable-js-file", .severity, .identifiers.CVE[0] + " -" + .identifiers.summary, $file, 0, 0] | @csv' < "${tmpdir}/report.json" > "${tmpdir}/findings.csv"
