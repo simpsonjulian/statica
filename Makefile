@@ -3,7 +3,7 @@ test:
 	./statica . html console
 
 clean:
-	rm -f *.html
+	rm -f *.html *.csv
 	rm -rf WebGoat
 
 test.html:
