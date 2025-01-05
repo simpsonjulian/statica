@@ -33,7 +33,7 @@ class SarifFile
       rule = driver.rules.select { |r| r.id == rule_id }.first
       rule.defaultConfiguration.level
     else
-      raise "can't work out where to find rules"
+      raise "can't work out where to find rules for #{rule_id}, #{tool}, #{driver}"
     end
   end
 

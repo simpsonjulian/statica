@@ -18,6 +18,25 @@ for language in cpp cs java python ruby typescript; do
     >> "${output_csv}" || true
 done
 
+
+# tokens
+# ?
+# number in starting file
+# lines of duplicaiton
+# first path
+# number in second file
+#lines of duplication
+#second file
+
+# iterate over each line
+# pop values
+# read the metadata
+#keep going until there are no files
+
+
+
+
+
 awk -F ',' '{print $1, $4, $5}' "${output_csv}" | while read -r lines start_line file; do
     end_line=$(($start_line + $lines))
     printf "duplication,note,code duplication found in source files,%s,%s,%s\n" "${file}" "${start_line}" "${end_line}"  >> "${findings_csv}"
