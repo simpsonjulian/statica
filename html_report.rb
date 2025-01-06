@@ -29,7 +29,7 @@ class SarifFile
         end
       end
 
-    elsif driver.rules&.length&.positive? # severity in the rule
+    elsif driver.rules.length.positive? # severity in the rule
       rule = driver.rules.select { |r| r.id == rule_id }.first
       rule.defaultConfiguration.level
     else
