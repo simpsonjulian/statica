@@ -2,6 +2,13 @@
 
 set -euo pipefail
 which semgrep > /dev/null  || exit 1
+BROKEN_VERSION="1.100.0"
+
+version=$(semgrep --version)
+if [[ $version == "$BROKEN_VERSION" ]]; then
+  echo "Semgrep $BROKEN_VERSION doesn't display rules in Sarif, skipping"
+  exit 1
+fi
 
 source=$1
 semgrep scan "${source}" --sarif

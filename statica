@@ -61,10 +61,6 @@ done
 echo "Scanning complete.  Reports found:"
 ls "${tmpdir}"
 
-echo "DEBUG"
-cat "${tmpdir}/semgrep.sarif"
-
-
 
 # console output
 if [[ "${modes}" =~ 'console' ]]; then
