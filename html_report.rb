@@ -20,6 +20,7 @@ class SarifFile
     tool = run.tool
     driver = tool.driver
 
+    rules = driver.rules
     if result.respond_to?(:level)
       result.level
     elsif tool.extensions # codeql with packs
@@ -29,8 +30,8 @@ class SarifFile
         end
       end
 
-    elsif driver.rules.length.positive? # severity in the rule
-      rule = driver.rules.select { |r| r.id == rule_id }.first
+    elsif rules && rules.length.positive? # severity comes from the rule
+      rule = rules.select { |r| r.id == rule_id }.first
       rule.defaultConfiguration.level
     else
       raise "can't work out where to find rules for #{rule_id}, #{tool}, #{driver}"
