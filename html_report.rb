@@ -83,6 +83,14 @@ end
 class HtmlReport
   attr_reader :results, :severities
 
+  def file_type_check(sarif_file)
+    # Check if the file is a SARIF file by its extension
+    File.extname(sarif_file).casecmp('.sarif').zero? || File.extname(sarif_file).empty?
+  rescue StandardError => e
+    puts "Error checking file type: #{e.message}"
+    false
+  end
+
   def initialize(sarif_file, destination_path)
     # Check for directory traversal in the file path and raise an error if found.
     raise "Destination path contains unsafe characters '..'" if destination_path.include?('..')

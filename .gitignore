@@ -3,3 +3,4 @@
 /report/
 *.html
 WebGoat
+.aider*
