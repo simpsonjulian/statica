@@ -61,7 +61,7 @@ RSpec.describe 'HtmlReport' do
     end
 
     it 'can find a command' do
-      expect(HtmlReport.new(nil, nil).command_exists('sh')).to eq true
+      expect(HtmlReport.new(nil, nil).command_exists('mkdir')).to eq true
     end
 
     it 'gives a fully qualified path if needed' do
