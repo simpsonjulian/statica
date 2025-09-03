@@ -3,7 +3,7 @@ lint:
 	actionlint .github/workflows/*.yml
 
 test: lint
-	bundle exec rspec .
+	bundle exec rspec spec
 
 
 clean:
