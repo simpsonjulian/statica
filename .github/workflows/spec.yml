@@ -1,4 +1,4 @@
-name: Acceptance Tests
+name: Linting and Specs
 on:
   push:
     branches: [ "main" ]

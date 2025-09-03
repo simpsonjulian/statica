@@ -77,7 +77,7 @@ process_hint_paths() {
 }
 
 look_for_dependencies_in_source() {
-  (cd "$source" && git ls-files | grep -E '\.jar$|\.dll$' || true) | while read -r file; do
+  (cd "$source" && git ls-files | (grep -E '\.jar$|\.dll$' || true)) | while read -r file; do
 
     if [[ $file =~ \.dll ]] && check_dll "${file}"; then
       report "checked-in-framework-dependencies" "Framework dependencies checked in to source control" "${file}"
