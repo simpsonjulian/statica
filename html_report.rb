@@ -95,7 +95,7 @@ class HtmlReport
     # Check for directory traversal in the file path and raise an error if found.
     unless destination_path.nil?
       unless file_type_check(sarif_file) || File.directory?(sarif_file)
-        raise "The input path must be either a SARIF file or a directory containing SARIF files"
+        raise 'The input path must be either a SARIF file or a directory containing SARIF files'
       end
 
     end
@@ -148,7 +148,7 @@ class HtmlReport
   end
 
   def command_exists(command)
-    `which -s #{command}`
+    `which  #{command} 2>/dev/null`
     $CHILD_STATUS.success?
   end
 
