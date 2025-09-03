@@ -1,0 +1,17 @@
+name: Acceptance Tests
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: 'ubuntu-22.04'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies and run test
+      run: make test
+

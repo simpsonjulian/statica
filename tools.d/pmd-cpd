@@ -38,7 +38,7 @@ done
 
 
 awk -F ',' '{print $1, $4, $5}' "${output_csv}" | while read -r lines start_line file; do
-    end_line=$(($start_line + $lines))
+    end_line=$((start_line + lines))
     printf "duplication,note,code duplication found in source files,%s,%s,%s\n" "${file}" "${start_line}" "${end_line}"  >> "${findings_csv}"
 done
 

@@ -1,6 +1,10 @@
-test:
+lint:
+	shellcheck statica tools.d/*
+	actionlint .github/workflows/*.yml
+
+test: lint
 	rspec .
-	./statica . html console
+
 
 clean:
 	rm -f *.html *.csv
@@ -9,8 +13,7 @@ clean:
 test.html:
 	./html_report.rb spec test.html
 
-spec:
-	rspec .
+
 
 acceptance:
 	./acceptance.sh

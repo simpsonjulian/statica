@@ -9,7 +9,7 @@ brew_prefix=$(brew --prefix)
 OUTPUT="${tmpdir}/churned"
 CSV="${tmpdir}/findings.csv"
 TOP_N_CHURNED_FILES=10
-touch $CSV
+touch "$CSV"
 
 git -C "${source}" log --format=format: --name-only --since=12.month \
  | grep -Ev '^$' \

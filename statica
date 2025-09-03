@@ -10,7 +10,7 @@ usage() {
 run_command() {
   local bin="${brew_prefix}/bin"
   local libexec="${brew_prefix}/opt/statica/libexec:${PATH}"
-  PATH="${app_dir}:${bin}:${libexec}" $@
+  PATH="${app_dir}:${bin}:${libexec}" "$@"
 }
 
 if [ $# -lt 2 ]; then
@@ -22,21 +22,21 @@ REPO_BRANCH=''
 LATEST_COMMIT_SHA=''
 
 tmpdir=$(mktemp -d)
-app_dir="$(dirname $(readlink -f $0))"
+path_to_file="$(readlink -f "$0")"
+app_dir=$(dirname "$path_to_file")
 brew_prefix=$(brew --prefix)
 
 source=$1
 shift
 
-for arg in $@; do
+for arg in "$@"; do
   if [ "$arg" != "console" ] && [ "$arg" != "html" ]; then
     usage
   fi
 done
 
 
-modes="$@"
-
+modes="$*"
 if [ -d "${app_dir}/tools.d" ]; then
   tools_dir="${app_dir}/tools.d"
 else
