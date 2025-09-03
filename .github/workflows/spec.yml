@@ -16,6 +16,8 @@ jobs:
       run: |
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         brew install actionlint
+        gem install rspec bundler
+        bundle install
 
     - name: Linting and specs
       run: |
