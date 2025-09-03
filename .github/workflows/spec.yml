@@ -10,17 +10,18 @@ jobs:
   build:
     runs-on: 'ubuntu-22.04'
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-    - name: Install dependencies
-      run: |
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        brew install actionlint
-        gem install rspec bundler
-        bundle install
+      - name: Install dependencies
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install actionlint
 
-    - name: Linting and specs
-      run: |
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        make test
+      - uses: ruby/setup-ruby@v1
+        with:
+         bundler-cache: true
 
+      - name: Linting and specs
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          make test
