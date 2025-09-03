@@ -13,11 +13,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install dependencies
-
       run: |
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         brew install actionlint
 
     - name: Linting and specs
-      run: make test
+      run: |
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        make test
 
