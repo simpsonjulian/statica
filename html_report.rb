@@ -94,7 +94,6 @@ class HtmlReport
   def initialize(sarif_file, destination_path)
     # Check for directory traversal in the file path and raise an error if found.
     unless destination_path.nil?
-      raise "Destination path contains unsafe characters '..'" if destination_path.include?('..')
       unless file_type_check(sarif_file) || File.directory?(sarif_file)
         raise "The input path must be either a SARIF file or a directory containing SARIF files"
       end
