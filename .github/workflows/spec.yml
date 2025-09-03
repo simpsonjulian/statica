@@ -12,16 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install dependencies
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Install dependencies and run
+
         run: |
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           brew install actionlint
-
-      - uses: ruby/setup-ruby@v1
-        with:
-         bundler-cache: true
-
-      - name: Linting and specs
-        run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           make test
