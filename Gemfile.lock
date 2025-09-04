@@ -2,9 +2,9 @@ GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.2)
-    bigdecimal (3.1.9)
+    bigdecimal (3.2.3)
     diff-lcs (1.5.1)
-    gruff (0.25.0)
+    gruff (0.29.0)
       bigdecimal (>= 3.0)
       histogram
       rmagick (>= 5.5)
@@ -14,11 +14,11 @@ GEM
     parallel (1.22.1)
     parser (3.2.2.0)
       ast (~> 2.4.1)
-    pkg-config (1.6.0)
+    pkg-config (1.6.4)
     rainbow (3.1.1)
     regexp_parser (2.7.0)
     rexml (3.3.9)
-    rmagick (6.1.1)
+    rmagick (6.1.4)
       observer (~> 0.1)
       pkg-config (~> 1.4)
     rspec (3.13.0)
