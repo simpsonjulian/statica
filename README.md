@@ -29,7 +29,7 @@ brew install semgrep \
     lizard-analyzer \
     checkov \
     pmd
-pip install semgrep-version-manager
+pip install semgrep-rules-manager
 ```
 
 You'll also want Ruby 3.0.0 or later installed to do the HTML.
