@@ -16,6 +16,6 @@ brew install semgrep \
     pmd \
     bearer/tap/bearer
 
-pipx install sarif-tools
+pipx install sarif-tools semgrep-version-manager
 
 ./statica WebGoat html

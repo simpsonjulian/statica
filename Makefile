@@ -4,7 +4,7 @@ lint:
 
 test: lint
 	bundle exec rspec spec
-
+	./statica . html
 
 clean:
 	rm -f *.html *.csv
@@ -13,12 +13,10 @@ clean:
 test.html:
 	./html_report.rb spec test.html
 
-
-
 acceptance:
 	./acceptance.sh
 
 live:
 	./live.sh
 
-.PHONY: test clean test.html spec acceptance live
+.PHONY: test clean test.html spec acceptance live selftest

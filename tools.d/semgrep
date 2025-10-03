@@ -1,14 +1,30 @@
 #!/bin/bash
 
 set -euo pipefail
-which semgrep > /dev/null  || exit 1
+which semgrep > /dev/null || exit 1
+which semgrep-rules-manager > /dev/null || exit 1
 BROKEN_VERSION="1.100.0"
 
 version=$(semgrep --version)
 if [[ $version == "$BROKEN_VERSION" ]]; then
-  echo "Semgrep $BROKEN_VERSION doesn't display rules in Sarif, skipping"
+  echo "Semgrep $BROKEN_VERSION doesn't display rules in Sarif, skipping" >&2
   exit 1
 fi
 
 source=$1
-semgrep scan "${source}" --sarif
+rules_dir=$(mktemp -d)
+trap 'rm -rf "$rules_dir"' EXIT
+
+# Download all community rules (correct syntax)
+for collection in community dotta trailofbits; do
+  semgrep-rules-manager  --dir "$rules_dir" download  --source $collection 1>&2
+done
+# Remove CI and pre-commit configs that may be included in some rulesets
+# When semgrep-rules-manager makes a pip release after 2024, this can go away
+for collection in "${rules_dir}"/*; do
+  rm -rf "${collection}/.pre-commit-config.yaml" "${collection}/.github" \
+  "${collection}/.gitlab-ci.yml" "${collection}/ci"
+done
+
+# Run semgrep with all rules
+semgrep --config "$rules_dir" "$source" --sarif  || true
