@@ -8,10 +8,7 @@ set -euo pipefail
 
 brew install simpsonjulian/statica-tap/statica bearer/tap/bearer
 
-pipx install sarif-tools
-npm install -g jscpd-sarif-reporter
+TEMP=$(mktemp -d)
+( cd "${TEMP}" && gh repo clone WebGoat/WebGoat -- --depth 1  &&  statica WebGoat html )
 
-cd /tmp
-
-gh repo clone WebGoat/WebGoat
-statica WebGoat html
+rm -r "${TEMP}"
