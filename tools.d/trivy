@@ -4,4 +4,4 @@ set -euo pipefail
 which trivy > /dev/null || exit 1
 
 source=$1
-trivy --scanners secret --timout 5m --format sarif fs "${source}"
+trivy --scanners secret --timeout 5m --format sarif fs "${source}"
