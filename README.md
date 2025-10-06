@@ -39,9 +39,9 @@ You'll also want Ruby 3.0.0 or later installed to do the HTML.
 ```bash
 statica <path to app source> [html|console]
 ```
-* <path to app source>: The directory containing the source code to be scanned.
-* [html]: Optional argument. If provided, an HTML report will be generated.
-* [console]: Optional argument. If provided, the report will be displayed in the console.
+- *path to app source* - the directory containing the source code to be scanned.
+- *html* - if provided, an HTML report will be generated.
+- *console* - if provided, the report will be displayed in the console.
 
 # License
 This project is licensed under the MIT License.
