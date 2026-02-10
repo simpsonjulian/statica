@@ -1,11 +1,12 @@
 lint:
 	shellcheck statica
-	grep bash tools.d/ | xargs shellcheck
+	file tools.d/* | grep 'shell script' | awk -F ':' '{print \$1}' | xargs shellcheck
 	actionlint .github/workflows/*.yml
 
 test: lint
 	bundle exec rspec spec
-	semgrep --debug --config semgrep/unsupported-platform.yml semgrep
+	semgrep-rules-manager update
+	semgrep --debug --config p/ci --include spec --include . .
 	./statica . html
 
 clean:

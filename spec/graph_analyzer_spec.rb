@@ -173,7 +173,7 @@ RSpec.describe GraphAnalyzer do
       data = JSON.parse(analyzer.to_visjs_json(2))
 
       analysis_node = data['nodes'].find { |n| n['shape'] == 'box' }
-      finding_node = data['nodes'].find { |n| n['shape'] == 'diamond' }
+      finding_node = data['nodes'].find { |n| n['shape'] == 'ellipse' }
       file_node = data['nodes'].find { |n| n['shape'] == 'ellipse' }
 
       expect(analysis_node).not_to be_nil
@@ -185,7 +185,7 @@ RSpec.describe GraphAnalyzer do
       data = JSON.parse(analyzer.to_visjs_json(2))
 
       error_finding = data['nodes'].find do |n|
-        n['shape'] == 'diamond' && n['color'] == '#e74c3c'
+        n['shape'] == 'ellipse' && n['color'] == '#e74c3c'
       end
 
       expect(error_finding).not_to be_nil
