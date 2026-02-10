@@ -4,6 +4,7 @@ lint:
 	actionlint .github/workflows/*.yml
 
 test: lint
+	bundle install
 	bundle exec rspec spec
 	./statica . html
 
