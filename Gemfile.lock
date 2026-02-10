@@ -13,6 +13,7 @@ GEM
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     observer (0.1.2)
+    pairing_heap (3.1.0)
     parallel (1.27.0)
     parser (3.3.10.0)
       ast (~> 2.4.1)
@@ -22,6 +23,11 @@ GEM
     racc (1.8.1)
     rainbow (3.1.1)
     regexp_parser (2.11.3)
+    rexml (3.4.4)
+    rgl (0.6.6)
+      pairing_heap (>= 0.3, < 4.0)
+      rexml (~> 3.2, >= 3.2.4)
+      stream (~> 0.5.3)
     rmagick (6.1.4)
       observer (~> 0.1)
       pkg-config (~> 1.4)
@@ -53,6 +59,9 @@ GEM
       parser (>= 3.3.7.2)
       prism (~> 1.4)
     ruby-progressbar (1.13.0)
+    rubyzip (2.4.1)
+    sarif-ruby (0.1.0)
+    stream (0.5.5)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
     unicode-emoji (4.1.0)
@@ -64,8 +73,11 @@ PLATFORMS
 
 DEPENDENCIES
   gruff
+  rgl (~> 0.6)
   rspec (~> 3.13)
   rubocop
+  rubyzip (~> 2.3)
+  sarif-ruby (~> 0.1.0)
 
 BUNDLED WITH
    2.2.33

@@ -14,8 +14,9 @@ choose() {
 }
 
 # run the scan, warnings only, ignore non-zero return code
+# timeout after 5 minutes (300 seconds) with non-zero exit code
 result=${tmpdir}/lizard.out
-lizard -w -o "${result}" "${source}" || true
+timeout 300 lizard -w -o "${result}" "${source}" || true
 
 [ -s "$result" ] || exit 1
 

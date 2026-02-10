@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Findings Report</title>
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
       .warning {
           color: #f39c12;
@@ -78,6 +79,55 @@
           font-size: 24px;
           color: #444;
       }
+
+      #graph-container {
+          width: 100%;
+          height: 600px;
+          border: 1px solid #ddd;
+          margin: 20px 0;
+      }
+
+      .hotspot-files table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+
+      .hotspot-files th,
+      .hotspot-files td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+      }
+
+      .hotspot-files th {
+          background-color: #f4f4f4;
+          font-weight: bold;
+      }
+
+      .hotspot-files tr:hover {
+          background-color: #f9f9f9;
+      }
+
+      .widespread-findings table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+
+      .widespread-findings th,
+      .widespread-findings td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+      }
+
+      .widespread-findings th {
+          background-color: #f4f4f4;
+          font-weight: bold;
+      }
+
+      .widespread-findings tr:hover {
+          background-color: #f9f9f9;
+      }
   </style>
 </head>
 <body>
@@ -99,6 +149,12 @@
     </div>
   </div>
 
+  <div class="graph-section">
+    <h2>Findings Graph</h2>
+    <p>Interactive visualization of files with 3+ findings and their relationships. Drag nodes to reorganize, scroll to
+      zoom:</p>
+    <div id="graph-container"></div>
+  </div>
 
   <% severities.each do |severity| %>
 
@@ -110,12 +166,12 @@
 
       <% results_matching = results_matching(severity, rule_id) %>
 
-   <p class="collapsible <%= results_matching.length <= 5 ? 'active' : '' %>">
-      <b><%= rule_id %></b>:
-      <%= desc %>
-      <em>[ <%= results_matching.first.tool %>] </em>
-      <strong>(<%= results_matching.length %>)</strong>
-    </p>
+      <p class="collapsible <%= results_matching.length <= 5 ? 'active' : '' %>">
+        <b><%= rule_id %></b>:
+        <%= desc %>
+        <em>[ <%= results_matching.first.tool %>] </em>
+        <strong>(<%= results_matching.length %>)</strong>
+      </p>
 
       <ul>
         <% results_matching.each do |finding| %>
@@ -128,29 +184,96 @@
 
 
   <% end %>
-</div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let coll = document.getElementsByClassName("collapsible");
-        for (let i = 0; i < coll.length; i++) {
-            let content = coll[i].nextElementSibling;
-            if (coll[i].classList.contains("active")) {
-                content.style.display = "block";
-            } else {
-                content.style.display = "none";
-            }
-            coll[i].addEventListener("click", function () {
-                this.classList.toggle("active");
-                if (content.style.display === "block") {
-                    content.style.display = "none";
-                } else {
-                    content.style.display = "block";
-                }
-            });
-        }
-    });
-</script>
+  <script>
+      document.addEventListener("DOMContentLoaded", function () {
+          // Collapsible sections
+          let coll = document.getElementsByClassName("collapsible");
+          for (let i = 0; i < coll.length; i++) {
+              let content = coll[i].nextElementSibling;
+              if (coll[i].classList.contains("active")) {
+                  content.style.display = "block";
+              } else {
+                  content.style.display = "none";
+              }
+              coll[i].addEventListener("click", function () {
+                  this.classList.toggle("active");
+                  if (content.style.display === "block") {
+                      content.style.display = "none";
+                  } else {
+                      content.style.display = "block";
+                  }
+              });
+          }
+
+          // Initialize vis.js graph
+          var container = document.getElementById('graph-container');
+          var graphData = <%= @graph_analyzer.to_visjs_json(3) %>;
+
+          var options = {
+              nodes: {
+                  font: {
+                      size: 14
+                  },
+                  fixed: false
+              },
+              edges: {
+                  font: {
+                      size: 10,
+                      align: 'middle'
+                  },
+                  smooth: {
+                      type: 'cubicBezier',
+                      forceDirection: 'horizontal'
+                  }
+              },
+              layout: {
+                  improvedLayout: true
+              },
+              physics: {
+                  enabled: true,
+                  solver: 'forceAtlas2Based',
+                  forceAtlas2Based: {
+                      gravitationalConstant: -50,
+                      centralGravity: 0.01,
+                      springLength: 150,
+                      springConstant: 0.08,
+                      damping: 0.4,
+                      avoidOverlap: 0.5
+                  },
+                  stabilization: {
+                      enabled: true,
+                      iterations: 200,
+                      updateInterval: 25
+                  }
+              },
+              manipulation: {
+                  enabled: false
+              },
+              interaction: {
+                  dragNodes: true,
+                  dragView: true,
+                  zoomView: true,
+                  hover: true
+              }
+          };
+
+          var network = new vis.Network(container, graphData, options);
+
+          // Allow individual node dragging
+          network.on("dragStart", function (params) {
+              if (params.nodes.length > 0) {
+                  network.selectNodes([params.nodes[0]]);
+              }
+          });
+
+          // Stop physics after stabilization for better performance
+          network.on("stabilizationIterationsDone", function () {
+              network.setOptions({physics: false});
+          });
+      });
+  </script>
+</div>
 
 </body>
 </html>

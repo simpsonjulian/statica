@@ -6,82 +6,12 @@ require 'json'
 require 'ostruct'
 require 'erb'
 require 'cgi/util'
-
-# loads and represents one of more SARIF files
-class SarifFile
-  attr_reader :report
-
-  def initialize(path)
-    @report = get_sarifs(path)
-  end
-
-  def find_severity(result, run)
-    rule_id = result.ruleId
-    tool = run.tool
-    driver = tool.driver
-
-    rules = driver.rules
-    if result.respond_to?(:level)
-      result.level
-    elsif tool.extensions # codeql with packs
-      tool.extensions.map do |e|
-        e.rules.map do |r|
-          return r.defaultConfiguration.level if r.id == rule_id
-        end
-      end
-
-    elsif rules && rules.length.positive? # severity comes from the rule
-      rule = rules.select { |r| r.id == rule_id }.first
-      rule.defaultConfiguration.level
-    else
-      raise "can't work out where to find rules for #{rule_id}, #{tool}, #{driver}"
-    end
-  end
-
-  def format_result(result, report)
-    rule_id = result.ruleId
-    region = result.locations[0].physicalLocation.region
-    run = report.runs.first
-
-    OpenStruct.new({ severity: find_severity(result, run),
-                     description: CGI.escapeHTML(result.message.text),
-                     linenum: region ? region.startLine : 0,
-                     file_url: result.locations[0].physicalLocation.artifactLocation.uri,
-                     rule_id: rule_id,
-                     tool: report.runs.first.tool.driver.name })
-  end
-
-  def results
-    output = []
-    @report.each do |report|
-      results = report.runs[0].results
-      next if results.nil?
-
-      output += results.map do |result|
-        format_result(result, report)
-      end
-    end
-    output
-  end
-
-  private
-
-  def get_sarifs(path)
-    if File.directory?(path)
-      Dir.glob("#{path}/*.sarif").map do |sarif|
-        puts "Reading #{sarif}"
-        JSON.parse(File.read(sarif), object_class: OpenStruct)
-      end
-    else
-      puts "Reading #{path}"
-      [JSON.parse(File.read(path), object_class: OpenStruct)]
-    end
-  end
-end
+require 'sarif'
+require_relative 'graph_analyzer'
 
 # renders sarif findings into HTML and writes to disk
 class HtmlReport
-  attr_reader :results, :severities
+  attr_reader :results, :severities, :graph_analyzer
 
   def file_type_check(sarif_file)
     # Check if the file is a SARIF file by its extension
@@ -93,15 +23,13 @@ class HtmlReport
 
   def initialize(sarif_file, destination_path)
     # Check for directory traversal in the file path and raise an error if found.
-    unless destination_path.nil?
-      unless file_type_check(sarif_file) || File.directory?(sarif_file)
-        raise 'The input path must be either a SARIF file or a directory containing SARIF files'
-      end
-
+    if !destination_path.nil? && !(file_type_check(sarif_file) || File.directory?(sarif_file))
+      raise 'The input path must be either a SARIF file or a directory containing SARIF files'
     end
+
     @sarif_spec = sarif_file
     @dest_path = destination_path
-    
+
     # Ensure that we are processing only supported files (e.g., .sarif or directory)
 
     @severities = %w[error warning note]
@@ -111,15 +39,103 @@ class HtmlReport
   end
 
   def generate
-    @sarif = SarifFile.new(@sarif_spec)
-    @results = @sarif.results
+    @sarif_reports = load_sarifs(@sarif_spec)
+    @results = extract_results
 
-    @sarif.report.each do |report|
+    @sarif_reports.each do |report|
       tool_name = report.runs.first.tool.driver.name
       @tools << tool_name
     end
+
+    # Build graph analysis
+    @graph_analyzer = GraphAnalyzer.new
+    @graph_analyzer.analyze(@results)
+
     self
   end
+
+  def load_sarifs(path)
+    if File.directory?(path)
+      Dir.glob("#{path}/*.sarif").map do |sarif|
+        puts "Reading #{sarif}"
+        Sarif.load(sarif)
+      end
+    else
+      puts "Reading #{path}"
+      [Sarif.load(path)]
+    end
+  end
+
+  def find_severity(result, run)
+    rule_id = result.rule_id
+    tool = run.tool
+    driver = tool.driver
+
+    rules = driver.rules
+    if result.respond_to?(:level)
+      result.level
+    elsif tool.extensions # codeql with packs
+      tool.extensions.map do |e|
+        e.rules.map do |r|
+          return r.default_configuration.level if r.id == rule_id
+        end
+      end
+
+    elsif rules&.length&.positive? # severity comes from the rule
+      rule = rules.select { |r| r.id == rule_id }.first
+      rule.default_configuration.level
+    else
+      raise "can't work out where to find rules for #{rule_id}, #{tool}, #{driver}"
+    end
+  end
+
+  def format_result(result, report)
+    rule_id = result.rule_id
+    region = result.locations[0].physical_location.region
+    run = report.runs.first
+    severity = find_severity(result, run)
+    region = region ? region.start_line : 0
+    file_location = result.locations[0].physical_location.artifact_location.uri
+    tool = run.tool.driver.name
+
+    OpenStruct.new({ severity: severity,
+                     description: CGI.escapeHTML(result.message.text),
+                     linenum: region,
+                     file_url: file_location,
+                     rule_id: clean_rule_id(rule_id),
+                     tool: tool })
+  end
+
+  def clean_rule_id(rule_id)
+    # Remove temp directory paths from rule IDs
+    # Example: "var.folders.w2...tmp.XXX.community.rule.name" -> "community.rule.name"
+    return rule_id unless rule_id.include?('tmp.')
+    
+    parts = rule_id.split('.')
+    # Find where the actual rule starts (after tmp.XXX)
+    tmp_idx = parts.index { |p| p.start_with?('tmp') }
+    if tmp_idx && tmp_idx + 2 < parts.length
+      parts[(tmp_idx + 2)..-1].join('.')
+    else
+      # Fallback: take last 4 parts
+      parts.last(4).join('.')
+    end
+  end
+
+  def extract_results
+    output = []
+    @sarif_reports.each do |report|
+      results = report.runs[0].results
+      next if results.nil?
+
+      output += results.map do |result|
+        format_result(result, report)
+      end
+    end
+    output
+  end
+
+  public
 
   def results_matching(severity, rule_id)
     @results.select do |result|

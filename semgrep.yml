@@ -1,0 +1,4 @@
+extensions:
+  - .csproj: xml
+  - .vbproj: xml
+  - .fsproj: xml

@@ -1,9 +1,11 @@
 lint:
-	shellcheck statica tools.d/*
+	shellcheck statica
+	grep bash tools.d/ | xargs shellcheck
 	actionlint .github/workflows/*.yml
 
 test: lint
 	bundle exec rspec spec
+	semgrep --debug --config semgrep/unsupported-platform.yml semgrep
 	./statica . html
 
 clean:

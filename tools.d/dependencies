@@ -1,110 +1,350 @@
-#!/bin/bash
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-# finds jar csproj_files or dlls that are checked into git repo, and checks if they are available in nuget
-# then reports via sarif format
-# usage: dependencies <path to repo>
+require 'optparse'
+require 'json'
+require 'zip'
+require 'sarif'
 
+EXIT_SUCCESS = 0
+EXIT_ISSUES = 1
+EXIT_ERROR = 2
 
-set -euo pipefail
-which git > /dev/null || exit 1
-which dotnet > /dev/null || exit 1
-which unzip > /dev/null || exit 1
+class FileType
+  JAVASCRIPT = 'JavaScript'
+  DLL = 'DLL'
+  JAR = 'JAR'
+end
 
-source=$1
-tmp=$(mktemp -d)
-brew_prefix=$(brew --prefix)
-findings_csv="${tmp}/findings.csv"
-touch "${findings_csv}"
+class Finding
+  attr_reader :file_path, :file_type, :metadata
 
-cat <<-EOF > "${tmp}/dll.fsx"
-  if fsi.CommandLineArgs.Length < 2 then
-      System.Console.Error.WriteLine("Please supply assembly path")
-      exit 1
-  let arg = fsi.CommandLineArgs.[1]
-  System.Console.WriteLine(arg)
-  System.Console.WriteLine(System.Reflection.AssemblyName.GetAssemblyName(arg).ToString())
-EOF
+  def initialize(file_path, file_type, metadata = '')
+    @file_path = file_path
+    @file_type = file_type
+    @metadata = metadata
+  end
+end
 
+class Checker
+  def initialize(directory)
+    @root_dir = File.expand_path(directory)
+  end
 
-dll_assembly_info() {
-  local dll=$1
-  dotnet fsi "${tmp}/dll.fsx" "$dll"
-}
+  private
 
-jar_manifest_info() {
-  local jar=$1
-  # use unzip to extract the META-INF/MANIFEST.MF file
-  unzip -p "$jar" META-INF/MANIFEST.MF | grep -E 'Implementation-Version|Implementation-Vendor'
-}
+  def get_git_files(patterns)
+    all_files = []
 
-report() {
-  local rule=$1
-  local description=$2
-  local file=$3
-  printf "%s,note,%s,%s,%s,%s\n" "$rule" "$description" "${file}" 0 0  >> "${findings_csv}"
-}
+    patterns.each do |pattern|
+      output = `git -C "#{@root_dir}" ls-files "#{pattern}" 2>/dev/null`
+      next if $?.exitstatus != 0
 
-check_dll() {
-  local file=$1
-  # ensure that the csproj_file isn't System. or Web.
-  # but report a more specific thing if it's a framework dependency
-  dll_assembly_info "$source/$file" | grep -qE '^System.|^Web.|^Microsoft'
-}
+      output.each_line do |line|
+        line = line.strip
+        all_files << line unless line.empty?
+      end
+    end
 
-check_jar() {
-  local file=$1
-  # check if the jar is a known third party dependency
-  # report if it is
-  jar_manifest_info "$source/$file" | grep -iqE 'apache|google|sun|oracle'
-}
+    all_files
+  end
 
-find_package_config_files() {
-  find "$source" -iname "packages.config" | while read -r file; do
-    report "old-nuget-configuration" "Nuget dependencies should be declared in a PackageResource" "${file}"
-  done
-}
+  def get_dll_metadata(file_path)
+    full_path = File.join(@root_dir, file_path)
+    output = `strings "#{full_path}" 2>/dev/null`
+    return '' if $?.exitstatus != 0
 
-process_hint_paths() {
-  local csproj_file=$1
+    metadata = []
+    output.each_line do |line|
+      if line.include?('Version') || line.include?('AssemblyTitle')
+        metadata << line.strip
+        break if metadata.size >= 2
+      end
+    end
 
-  grep -E '<HintPath>.*</HintPath>' "$csproj_file" | while read -r hint_path_entry; do
-    proj_dir=$(dirname "$csproj_file")
-    hintpath=$(echo "$hint_path_entry" | sed -E 's/.*<HintPath>(.*)<\/HintPath>.*/\1/' | sed -E 's/\\/\//g')
-    if [[ ! -f "${proj_dir}/$hintpath" ]]; then
-       report "hintpath-missing-file" "Missing DLL in Hint Path" "${csproj_file}"
-    fi
-  done
-}
+    metadata.join(' ')
+  end
 
-look_for_dependencies_in_source() {
-  (cd "$source" && git ls-files | (grep -E '\.jar$|\.dll$' || true)) | while read -r file; do
+  def get_jar_metadata(file_path)
+    full_path = File.join(@root_dir, file_path)
 
-    if [[ $file =~ \.dll ]] && check_dll "${file}"; then
-      report "checked-in-framework-dependencies" "Framework dependencies checked in to source control" "${file}"
-     elif [[ $file =~ \.jar ]] && check_jar "${file}"; then
-      report "checked-in-thirdparty-dependencies" "Third party dependencies checked in to source control" "${file}"
+    Zip::File.open(full_path) do |zip_file|
+      manifest = zip_file.find { |f| f.name == 'META-INF/MANIFEST.MF' }
+      return '' unless manifest
+
+      metadata = []
+      manifest.get_input_stream.read.each_line do |line|
+        if line.include?('Implementation-Title') || line.include?('Implementation-Version')
+          metadata << line.strip
+          break if metadata.size >= 2
+        end
+      end
+
+      return metadata.join(' ')
+    end
+
+    ''
+  end
+
+  def file_referenced_in_csproj?(basename)
+    # Search for .csproj files
+    csproj_files = get_git_files(['*.csproj'])
+
+    csproj_files.each do |csproj_file|
+      full_path = File.join(@root_dir, csproj_file)
+      next unless File.exist?(full_path)
+
+      content = File.read(full_path)
+      # Check if the file is referenced as <Reference Include="filename">
+      if content.match?(/<HintPath>.+#{Regexp.escape(basename)}/i)
+        return true
+      end
+    end
+
+    false
+  end
+
+  def file_referenced?(file_path)
+    basename = File.basename(file_path)
+    name_without_ext = File.basename(file_path, File.extname(file_path))
+    path_without_ext = file_path.sub(/\.[^.]+$/, '')
+
+    # Search patterns to try (literal strings, not regex)
+    patterns = [
+      basename,
+      name_without_ext,
+      path_without_ext
+    ]
+
+    # Check if ack is available
+    unless system('which ack > /dev/null 2>&1')
+      warn "Error: 'ack' is not installed. Install it with: brew install ack"
+      exit EXIT_ERROR
+    end
+
+    # First check if file is referenced in .csproj files as a <Reference>
+    if file_referenced_in_csproj?(basename)
+      return true
+    end
+
+    # Try each pattern with ack
+    patterns.each do |pattern|
+      # Use ack to search for pattern, excluding the file itself and .csproj files
+      # --literal for exact string matching, -l for files only
+      # Quote pattern properly for shell
+      escaped_pattern = pattern.gsub("'", "'\\\\''")
+      cmd = "cd '#{@root_dir}' && ack --literal -l '#{escaped_pattern}' 2>/dev/null"
+      output = `#{cmd}`
+
+      if $?.exitstatus == 0
+        # Found matches, check if any are not the file itself or .csproj files
+        output.each_line do |line|
+          match_file = line.strip
+
+          # Skip if it's the file itself or a .csproj file
+          next if match_file == file_path
+          next if match_file.downcase.end_with?('.csproj')
+
+          return true
+        end
+      end
+    end
+
+    false
+  end
+
+  public
+
+  def check_javascript_files
+    extensions = ['*.js']
+    files = get_git_files(extensions)
+
+    findings = []
+    files.each do |file|
+      findings << Finding.new(file, FileType::JAVASCRIPT) unless file_referenced?(file)
+    end
+
+    findings
+  end
+
+  def check_dll_files
+    files = get_git_files(['*.dll'])
+
+    findings = []
+    files.each do |file|
+      unless file_referenced?(file)
+        metadata = get_dll_metadata(file)
+        findings << Finding.new(file, FileType::DLL, metadata)
+      end
+    end
+
+    findings
+  end
+
+  def check_jar_files
+    files = get_git_files(['*.jar'])
+
+    findings = []
+    files.each do |file|
+      unless file_referenced?(file)
+        metadata = get_jar_metadata(file)
+        findings << Finding.new(file, FileType::JAR, metadata)
+      end
+    end
+
+    findings
+  end
+end
+
+# Color constants for terminal output
+RED = "\033[0;31m"
+YELLOW = "\033[1;33m"
+RESET = "\033[0m"
+
+def git_repository?(directory)
+  system("git -C '#{directory}' rev-parse --git-dir > /dev/null 2>&1")
+end
+
+def output_text(findings)
+  findings.each do |f|
+    file_type = "#{f.file_type} not referenced:"
+    if f.metadata && !f.metadata.empty?
+      puts "#{RED}#{file_type}#{RESET} #{f.file_path} #{YELLOW}(#{f.metadata})#{RESET}"
     else
-      report "checked-in-dependencies" "dependencies checked in to source control" "${file}"
-     fi
+      puts "#{RED}#{file_type}#{RESET} #{f.file_path}"
+    end
+  end
+end
 
-  done
+def output_sarif(findings)
+  sarif = Sarif::Log.new(
+    version: '2.1.0',
+    runs: [
+      Sarif::Run.new(
+        tool: Sarif::Tool.new(
+          driver: Sarif::ToolComponent.new(
+            name: 'depspot',
+            information_uri: 'https://github.com/simpsonjulian/depspot',
+            version: '1.0.0',
+            rules: [
+              Sarif::ReportingDescriptor.new(
+                id: 'unreferenced-javascript',
+                short_description: Sarif::MultiformatMessageString.new(
+                  text: 'JavaScript file not referenced in codebase'
+                ),
+                help_uri: 'https://github.com/simpsonjulian/depspot'
+              ),
+              Sarif::ReportingDescriptor.new(
+                id: 'unreferenced-dll',
+                short_description: Sarif::MultiformatMessageString.new(
+                  text: 'DLL file not referenced in codebase'
+                ),
+                help_uri: 'https://github.com/simpsonjulian/depspot'
+              ),
+              Sarif::ReportingDescriptor.new(
+                id: 'unreferenced-jar',
+                short_description: Sarif::MultiformatMessageString.new(
+                  text: 'JAR file not referenced in codebase'
+                ),
+                help_uri: 'https://github.com/simpsonjulian/depspot'
+              )
+            ]
+          )
+        ),
+        results: findings.map do |f|
+          rule_id = case f.file_type
+                    when FileType::JAVASCRIPT then 'unreferenced-javascript'
+                    when FileType::DLL then 'unreferenced-dll'
+                    when FileType::JAR then 'unreferenced-jar'
+                    end
+
+          message = "#{f.file_type} file not referenced in codebase"
+          message += " (#{f.metadata})" if f.metadata && !f.metadata.empty?
+
+          Sarif::Result.new(
+            rule_id: rule_id,
+            level: 'warning',
+            message: Sarif::Message.new(text: message),
+            locations: [
+              Sarif::Location.new(
+                physical_location: Sarif::PhysicalLocation.new(
+                  artifact_location: Sarif::ArtifactLocation.new(
+                    uri: f.file_path
+                  )
+                )
+              )
+            ]
+          )
+        end
+      )
+    ]
+  )
+
+  puts sarif.to_json
+end
+
+def print_usage
+  puts "Usage: depspot PATH [OPTIONS]"
+  puts ""
+  puts "Find project files that aren't referenced in code"
+  puts ""
+  puts "Arguments:"
+  puts "  PATH               Directory to scan (required)"
+  puts ""
+  puts "Options:"
+  puts "  --no-sarif         Output in plain text instead of SARIF format"
+  puts "  -h, --help         Show this help message"
+  puts ""
+  puts "By default, outputs SARIF format and checks all file types (JavaScript, DLL, JAR)."
+end
+
+# Parse command line options
+options = {
+  sarif: true,
+  directory: nil
 }
 
-look_for_busted_hint_paths() {
-# is there a csproj csproj_file with a Resource declared that has a HintPath attribute?  And does the Hintpath exist?
-# then does the Resource version match the version from the artifact in the HintPath?
+OptionParser.new do |opts|
+  opts.on('--no-sarif', 'Output in plain text instead of SARIF') { options[:sarif] = false }
+  opts.on('-h', '--help', 'Show help message') do
+    print_usage
+    exit EXIT_SUCCESS
+  end
+end.parse!
 
-find "$source" -iname "*.csproj" | while read -r csproj_file; do
-  if grep -qi HintPath "$csproj_file"; then
-    process_hint_paths "$csproj_file"
-  fi
-done
-}
+# Get directory from first argument
+options[:directory] = ARGV[0]
 
-look_for_busted_hint_paths
-find_package_config_files
-look_for_dependencies_in_source
+unless options[:directory]
+  warn "Error: PATH argument is required"
+  puts ""
+  print_usage
+  exit EXIT_ERROR
+end
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "Statica Dependencies" "0.1" "${findings_csv}"
+unless git_repository?(options[:directory])
+  warn "Error: Not in a git repository"
+  exit EXIT_ERROR
+end
 
-rm -rf "${tmp}"
+# Initialize checker
+checker = Checker.new(options[:directory])
+results = []
+
+# Run all checks
+begin
+  results.concat(checker.check_javascript_files)
+  results.concat(checker.check_dll_files)
+  results.concat(checker.check_jar_files)
+rescue => e
+  warn "Error checking files: #{e.message}"
+  exit EXIT_ERROR
+end
+
+# Output results
+if options[:sarif]
+  output_sarif(results)
+else
+  output_text(results)
+end
+

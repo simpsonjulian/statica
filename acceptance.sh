@@ -14,6 +14,7 @@ brew install semgrep \
     lizard-analyzer \
     checkov \
     pmd \
+    coreutils \
     bearer/tap/bearer
 
 pipx install sarif-tools semgrep-rules-manager
