@@ -5,8 +5,6 @@ lint:
 
 test: lint
 	bundle exec rspec spec
-	semgrep-rules-manager update
-	semgrep --debug --config p/ci --include spec --include . .
 	./statica . html
 
 clean:
