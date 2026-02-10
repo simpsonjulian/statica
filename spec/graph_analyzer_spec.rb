@@ -196,7 +196,7 @@ RSpec.describe GraphAnalyzer do
 
       edge = data['edges'].first
       expect(edge).to have_key('label')
-      expect(['HAS', 'IN']).to include(edge['label'])
+      expect(%w[HAS IN]).to include(edge['label'])
     end
   end
 end

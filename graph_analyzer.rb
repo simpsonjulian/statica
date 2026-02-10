@@ -1,6 +1,3 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-
 require 'rgl/adjacency'
 require 'rgl/traversal'
 require 'json'
@@ -202,5 +199,4 @@ class GraphAnalyzer
       parts.last(4).join('.')
     end
   end
-
 end

@@ -106,8 +106,6 @@ class HtmlReport
                      tool: tool })
   end
 
-
-
   def extract_results
     output = []
     @sarif_reports.each do |report|
@@ -120,8 +118,6 @@ class HtmlReport
     end
     output
   end
-
-  public
 
   def results_matching(severity, rule_id)
     @results.select do |result|

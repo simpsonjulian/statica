@@ -10,7 +10,7 @@ data = CSV.parse(csv_data, headers: true)
 
 # Initialize a Gruff line graph
 graph = Gruff::Line.new
-graph.title = "CSV Column Data Graph"
+graph.title = 'CSV Column Data Graph'
 
 # Extract all columns and add them to the graph
 data.headers.each do |header|
@@ -19,7 +19,7 @@ data.headers.each do |header|
 end
 
 # Save the graph to a temporary file
-temp_file = "temp_graph.png"
+temp_file = 'temp_graph.png'
 graph.write(temp_file)
 
 # Read the graph image and write it to stdout as base64-encoded data
