@@ -18,6 +18,6 @@ brew install semgrep \
     bearer/tap/bearer
 
 pipx install sarif-tools semgrep-rules-manager
-bundle install
+bundle install --without=development
 
 bundle exec ./statica WebGoat html
