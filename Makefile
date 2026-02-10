@@ -1,6 +1,6 @@
 lint:
 	shellcheck statica
-	file tools.d/* | grep 'shell script' | awk -F ':' '{print \$1}' | xargs shellcheck
+	file tools.d/* | grep 'shell script' | awk -F ':' '{print $$1}' | xargs shellcheck
 	actionlint .github/workflows/*.yml
 
 test: lint
