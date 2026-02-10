@@ -126,7 +126,7 @@ class GraphAnalyzer
               when 'finding'
                 # Extract just the rule name, removing temp paths
                 # Handle formats like: "tmp.XXX.community.rule.name" -> "community.rule.name"
-                clean_up_label(raw_label)
+                GraphAnalyzer.clean_rule_id(raw_label)
               when 'file'
                 # Just show filename, not full path
                 raw_label.split('/').last
@@ -187,20 +187,19 @@ class GraphAnalyzer
     { nodes: nodes, edges: edges }.to_json
   end
 
-  private
+  def self.clean_rule_id(rule_id)
+    # Remove temp directory paths from rule IDs
+    # Example: "var.folders.w2...tmp.XXX.community.rule.name" -> "community.rule.name"
+    return rule_id unless rule_id.include?('tmp.')
 
-  def clean_up_label(raw_label)
-    if raw_label.include?('tmp.')
-      parts = raw_label.split('.')
-      # Find where the actual rule starts (after tmp.XXX)
-      tmp_idx = parts.index { |p| p.start_with?('tmp') }
-      if tmp_idx && tmp_idx + 2 < parts.length
-        parts[(tmp_idx + 2)..].join('.')
-      else
-        raw_label.split('.').last(4).join('.') # Take last 4 parts as fallback
-      end
+    parts = rule_id.split('.')
+    # Find where the actual rule starts (after tmp.XXX)
+    tmp_idx = parts.index { |p| p.start_with?('tmp') }
+    if tmp_idx && tmp_idx + 2 < parts.length
+      parts[(tmp_idx + 2)..-1].join('.')
     else
-      raw_label
+      # Fallback: take last 4 parts
+      parts.last(4).join('.')
     end
   end
 

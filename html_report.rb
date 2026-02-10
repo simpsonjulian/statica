@@ -102,25 +102,11 @@ class HtmlReport
                      description: CGI.escapeHTML(result.message.text),
                      linenum: region,
                      file_url: file_location,
-                     rule_id: clean_rule_id(rule_id),
+                     rule_id: GraphAnalyzer.clean_rule_id(rule_id),
                      tool: tool })
   end
 
-  def clean_rule_id(rule_id)
-    # Remove temp directory paths from rule IDs
-    # Example: "var.folders.w2...tmp.XXX.community.rule.name" -> "community.rule.name"
-    return rule_id unless rule_id.include?('tmp.')
-    
-    parts = rule_id.split('.')
-    # Find where the actual rule starts (after tmp.XXX)
-    tmp_idx = parts.index { |p| p.start_with?('tmp') }
-    if tmp_idx && tmp_idx + 2 < parts.length
-      parts[(tmp_idx + 2)..-1].join('.')
-    else
-      # Fallback: take last 4 parts
-      parts.last(4).join('.')
-    end
-  end
+
 
   def extract_results
     output = []
