@@ -4,7 +4,7 @@ source "https://rubygems.org"
 
 git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
-# gem "rails"
+gemspec
 
 gem 'gruff'
 gem 'rgl', '~> 0.6'

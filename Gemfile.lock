@@ -1,3 +1,8 @@
+PATH
+  remote: .
+  specs:
+    statica (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -78,6 +83,7 @@ DEPENDENCIES
   rubocop
   rubyzip (~> 2.3)
   sarif-ruby (~> 0.1.0)
+  statica!
 
 BUNDLED WITH
    2.2.33
