@@ -18,7 +18,9 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - uses: ruby/setup-ruby@v1
+    - name: Ensure Ruby and Bundle exist on Linux
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
+      uses: ruby/setup-ruby@v1
       with:
         bundler-cache: true
 
