@@ -1,0 +1,26 @@
+# Git files
+.git
+.gitignore
+
+# Build artifacts
+*.gem
+.bundle
+vendor/bundle
+
+# Test files
+WebGoat/
+
+# Documentation
+*.md
+!README.md
+
+# Development files
+.rspec
+acceptance.sh
+erik.sh
+live.sh
+release.sh
+
+# Reports
+report/
+*.html

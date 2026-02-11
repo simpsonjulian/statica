@@ -24,7 +24,11 @@ LATEST_COMMIT_SHA=''
 tmpdir=$(mktemp -d)
 path_to_file="$(readlink -f "$0")"
 app_dir=$(dirname "$path_to_file")
-brew_prefix=$(brew --prefix)
+if which brew > /dev/null; then
+  brew_prefix=$(brew --prefix)
+else
+ brew_prefix="/usr/local"
+fi
 
 source=$1
 shift
@@ -37,9 +41,11 @@ done
 
 
 modes="$*"
+
 if [ -d "${app_dir}/tools.d" ]; then
   tools_dir="${app_dir}/tools.d"
 else
+
   tools_dir="${brew_prefix}/opt/statica/libexec/tools.d"
 fi
 

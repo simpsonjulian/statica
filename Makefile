@@ -20,4 +20,10 @@ acceptance:
 live:
 	./live.sh
 
-.PHONY: test clean test.html spec acceptance live selftest
+docker-build:
+	docker build -t statica:latest .
+
+docker-test:
+	docker run --rm -v $$(pwd):/app statica:latest statica /app html
+
+.PHONY: test clean test.html spec acceptance live selftest docker-build docker-test

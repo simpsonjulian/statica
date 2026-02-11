@@ -12,11 +12,30 @@ Statica will run other tools in the Homebrew ecosystem, and present a single rep
 
 ## Installing
 
+### Homebrew
+
 Statica builds upon the Homebrew ecosystem. If you have homebrew working on your computer, just run:
 
 ```bash
   brew install simpsonjulian/statica-tap/statica
 ```
+
+### Docker
+
+You can also run Statica using Docker:
+
+```bash
+# Build the image
+make docker-build
+
+# Run statica on a local directory
+docker run --rm -v /path/to/code:/code statica:latest statica /code html
+
+# Example: scan the current directory
+docker run --rm -v $(pwd):/code statica:latest statica /code console
+```
+
+### Local Installation
 
 If you want to run Statica locally, then you'll need to install the following tools:
 
