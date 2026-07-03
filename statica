@@ -9,8 +9,12 @@ usage() {
 
 run_command() {
   local bin="${brew_prefix}/bin"
-  local libexec="${brew_prefix}/opt/statica/libexec:${PATH}"
-  PATH="${app_dir}:${bin}:${libexec}" "$@"
+  local libexec="${brew_prefix}/opt/statica/libexec"
+  # Keep the caller's PATH (rbenv shims, bundler binstubs, etc.) ahead of
+  # brew_prefix, which is only a fallback for tools not already resolvable
+  # (e.g. semgrep, bearer). Putting brew_prefix first previously shadowed
+  # rbenv's ruby with Homebrew's, breaking `bundle exec ./statica . html`.
+  PATH="${app_dir}:${PATH}:${bin}:${libexec}" "$@"
 }
 
 if [ $# -lt 2 ]; then
@@ -32,6 +36,7 @@ fi
 
 source=$1
 shift
+source_abs=$(cd "${source}" && pwd)
 
 for arg in "$@"; do
   if [ "$arg" != "console" ] && [ "$arg" != "html" ]; then
@@ -50,22 +55,38 @@ else
 fi
 
 echo "Scanning ${source}"
+pids=()
 for scanner in "${tools_dir}"/*; do
   name=$(basename "${scanner}")
   report="${tmpdir}/${name}.sarif"
-  echo -n "Running ${name} ... "
+  status="${tmpdir}/${name}.status"
+  errlog="${tmpdir}/${name}.log"
 
-  run_command "$scanner" "$source" > "${report}" || {
-    echo "[NOT OK] There was an error running ${name}. No report saved."
-    rm -f "${report}"
-    continue
-  }
-  chars=$(wc -c < "${report}"| tr -d " ")
-  echo "[OK] Ran ${name} and put ${chars} characters of sarif file in ${report}"
+  (
+    if run_command "$scanner" "$source" > "${report}" 2> "${errlog}"; then
+      chars=$(wc -c < "${report}" | tr -d " ")
+      echo "[OK] Ran ${name} and put ${chars} characters of sarif file in ${report}" > "${status}"
+    else
+      echo "[NOT OK] There was an error running ${name}. No report saved." > "${status}"
+      rm -f "${report}"
+    fi
+  ) &
+  pids+=("$!")
+done
 
+for pid in "${pids[@]}"; do
+  wait "${pid}"
+done
+
+for scanner in "${tools_dir}"/*; do
+  name=$(basename "${scanner}")
+  cat "${tmpdir}/${name}.status"
+  if [ -s "${tmpdir}/${name}.log" ]; then
+    sed "s/^/  [${name}] /" "${tmpdir}/${name}.log"
+  fi
 done
 echo "Scanning complete.  Reports found:"
-ls "${tmpdir}"
+(cd "${tmpdir}" && ls -- *.sarif)
 
 
 # console output
@@ -88,7 +109,7 @@ if [[ "${modes}" =~ "html" ]]; then
 
   export REPO_URL REPO_BRANCH LATEST_COMMIT_SHA
 
-  run_command html_report.rb "${tmpdir}" "${html_report}"
+  run_command html_report.rb "${tmpdir}" "${html_report}" "${source_abs}"
   echo "HTML report at:"
   echo "${html_report}"
 fi

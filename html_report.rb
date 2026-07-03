@@ -21,7 +21,7 @@ class HtmlReport
     false
   end
 
-  def initialize(sarif_file, destination_path)
+  def initialize(sarif_file, destination_path, source_root = nil)
     # Check for directory traversal in the file path and raise an error if found.
     if !destination_path.nil? && !(file_type_check(sarif_file) || File.directory?(sarif_file))
       raise 'The input path must be either a SARIF file or a directory containing SARIF files'
@@ -29,6 +29,7 @@ class HtmlReport
 
     @sarif_spec = sarif_file
     @dest_path = destination_path
+    @source_root = source_root
 
     # Ensure that we are processing only supported files (e.g., .sarif or directory)
 
@@ -49,7 +50,7 @@ class HtmlReport
 
     # Build graph analysis
     @graph_analyzer = GraphAnalyzer.new
-    @graph_analyzer.analyze(@results)
+    @graph_analyzer.analyze(@results, source_root: @source_root)
 
     self
   end
@@ -175,5 +176,5 @@ end
 
 if __FILE__ == $PROGRAM_NAME && !defined?(RSpec)
   # The script is being run directly and not via RSpec
-  HtmlReport.new(ARGV[0], ARGV[1]).generate.publish
+  HtmlReport.new(ARGV[0], ARGV[1], ARGV[2]).generate.publish
 end

@@ -68,6 +68,14 @@ RSpec.describe 'HtmlReport' do
       expect(url).to start_with 'file:///'
       expect(url).not_to eq 'file://foo.html'
     end
+
+    it 'normalizes file paths reported by different tools against the shared source root' do
+      report = HtmlReport.new('spec/fixtures/path_normalization', nil, '/home/project')
+      report.generate
+
+      file_nodes = report.graph_analyzer.node_types.select { |_, type| type == 'file' }.keys
+      expect(file_nodes).to eq(['file:Dockerfile'])
+    end
   end
 end
 

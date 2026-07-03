@@ -24,16 +24,17 @@ class GraphAnalyzer
     @edge_types[[from, to]] = edge_type
   end
 
-  def analyze(results)
+  def analyze(results, source_root: nil)
     results.each_with_index do |result, idx|
       analysis_node = "analysis:#{result.tool}"
       finding_node = "finding:#{result.rule_id}:#{idx}"
-      file_node = "file:#{result.file_url}"
+      file_url = self.class.normalize_file_url(result.file_url, source_root)
+      file_node = "file:#{file_url}"
 
       # Add nodes with types
       add_node(analysis_node, 'analysis', result.tool)
       add_node(finding_node, 'finding', result.rule_id)
-      add_node(file_node, 'file', result.file_url)
+      add_node(file_node, 'file', file_url)
 
       # Add edges with types
       add_edge(analysis_node, finding_node, 'HAS')
@@ -46,11 +47,27 @@ class GraphAnalyzer
         description: result.description,
         linenum: result.linenum,
         tool: result.tool,
-        file: result.file_url
+        file: file_url
       }
     end
 
     self
+  end
+
+  # Different tools report the same file under different shapes depending on how the
+  # scan root was invoked (bare relative path, absolute path with the leading "/"
+  # stripped, or a file:// URI). Since every result in one analyze() call comes from
+  # scanning the same source_root, strip it off wherever it appears so the same file
+  # always maps to the same file: node regardless of which tool reported it.
+  def self.normalize_file_url(file_url, source_root)
+    return file_url if source_root.nil? || source_root.to_s.empty?
+
+    normalized_root = source_root.to_s.chomp('/').delete_prefix('/')
+
+    file_url
+      .delete_prefix('file://')
+      .delete_prefix('/')
+      .delete_prefix("#{normalized_root}/")
   end
 
   def densely_connected_subgraph(min_connections = 3)

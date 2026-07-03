@@ -7,9 +7,17 @@ on:
   schedule:
     - cron: "5 5 * * 6"
 
+permissions:
+  contents: read  # only need to checkout the repo and clone WebGoat over HTTPS
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   build:
+    name: Build (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -18,14 +26,16 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        persist-credentials: false
 
     - name: Install dependencies and run test
       run: make live
       env:
         GH_TOKEN: ${{ github.token }}
 
-    - uses: actions/upload-artifact@v6
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: report-${{ matrix.os }}
         path: /tmp/WebGoat/statica.html

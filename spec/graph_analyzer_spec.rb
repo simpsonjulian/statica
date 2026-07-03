@@ -122,6 +122,59 @@ RSpec.describe GraphAnalyzer do
     end
   end
 
+  describe '#analyze with heterogeneous path formats from different tools' do
+    let(:source_root) { '/Users/jsimpson/dev/simpsonjulian/statica' }
+
+    # All three results point at the same file in the same scanned codebase, but
+    # each string is shaped the way that tool actually emits it (verified against
+    # real tool output run against an absolute source path):
+    #   - churn (git-derived) always emits a clean, root-relative path
+    #   - checkov emits an absolute path with only the leading "/" stripped
+    #   - trivy emits a file:// URI resolved against its own uriBaseId
+    let(:heterogeneous_results) do
+      [
+        OpenStruct.new(
+          tool: 'churn',
+          rule_id: 'top-file-churns',
+          file_url: 'Dockerfile',
+          severity: 'note',
+          description: 'File has been committed to frequently.',
+          linenum: 0
+        ),
+        OpenStruct.new(
+          tool: 'checkov',
+          rule_id: 'CKV_DOCKER_2',
+          file_url: 'Users/jsimpson/dev/simpsonjulian/statica/Dockerfile',
+          severity: 'error',
+          description: 'Ensure that HEALTHCHECK instructions have been added',
+          linenum: 1
+        ),
+        OpenStruct.new(
+          tool: 'trivy',
+          rule_id: 'secret',
+          file_url: 'file:///Users/jsimpson/dev/simpsonjulian/statica/Dockerfile',
+          severity: 'error',
+          description: 'Secret found',
+          linenum: 3
+        )
+      ]
+    end
+
+    it 'treats the same file reported by different tools as a single file node' do
+      analyzer.analyze(heterogeneous_results, source_root: source_root)
+
+      file_nodes = analyzer.node_types.select { |_, type| type == 'file' }.keys
+      expect(file_nodes).to eq(['file:Dockerfile'])
+    end
+
+    it 'lets a file corroborated by 3 tools clear the densely-connected threshold' do
+      analyzer.analyze(heterogeneous_results, source_root: source_root)
+
+      subgraph = analyzer.densely_connected_subgraph(3)
+      expect(subgraph[:nodes]).to include('file:Dockerfile')
+    end
+  end
+
   describe '#densely_connected_subgraph' do
     before do
       analyzer.analyze(sample_results)

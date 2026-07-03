@@ -210,6 +210,24 @@
           var container = document.getElementById('graph-container');
           var graphData = <%= @graph_analyzer.to_visjs_json(3) %>;
 
+          // Pin the "analysis" (tool/check) nodes evenly around the perimeter and
+          // take them out of the physics simulation. Left to forceAtlas2Based they
+          // drift toward the same low-mass equilibrium near the file clusters and
+          // end up overlapping each other; fixing them on a circle spreads them
+          // apart and keeps them out of the way of the file/finding cluster in the
+          // middle, while their connected finding nodes are still free to be pulled
+          // toward them.
+          var checkNodes = graphData.nodes.filter(function (node) {
+              return node.id.indexOf('analysis:') === 0;
+          });
+          var checkRadius = Math.max(300, checkNodes.length * 60);
+          checkNodes.forEach(function (node, index) {
+              var angle = (2 * Math.PI * index) / checkNodes.length;
+              node.x = checkRadius * Math.cos(angle);
+              node.y = checkRadius * Math.sin(angle);
+              node.physics = false;
+          });
+
           var options = {
               nodes: {
                   font: {
@@ -233,9 +251,17 @@
               physics: {
                   enabled: true,
                   solver: 'forceAtlas2Based',
+                  // forceAtlas2Based scales both the pull-to-center (centralGravity)
+                  // and the repulsion between nodes by mass * degree, so raising
+                  // centralGravity is what actually anchors high-mass/high-degree
+                  // file nodes at the center and lets their (also mass-scaled)
+                  // repulsion push the attached, low-mass finding nodes outward.
+                  // At the previous default (0.01) that pull was negligible next
+                  // to gravitationalConstant, so the layout had no real hub/leaf
+                  // structure.
                   forceAtlas2Based: {
                       gravitationalConstant: -50,
-                      centralGravity: 0.01,
+                      centralGravity: 0.08,
                       springLength: 150,
                       springConstant: 0.08,
                       damping: 0.4,
