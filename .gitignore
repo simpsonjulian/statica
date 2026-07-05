@@ -5,3 +5,5 @@
 WebGoat
 .aider*
 /experimental.d/
+.prisma.*
+.DS_Store
