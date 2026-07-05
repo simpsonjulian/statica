@@ -128,6 +128,40 @@
       .widespread-findings tr:hover {
           background-color: #f9f9f9;
       }
+
+      .ai-assist-section {
+          margin: 20px 0;
+          padding: 15px 20px;
+          background-color: #f9f9f9;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+      }
+
+      .ai-assist-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin: 10px 0;
+      }
+
+      .ai-assist-buttons button {
+          padding: 8px 14px;
+          font-size: 14px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          background-color: #fff;
+          cursor: pointer;
+      }
+
+      .ai-assist-buttons button:hover {
+          background-color: #eee;
+      }
+
+      .ai-assist-status {
+          font-size: 14px;
+          color: #3498db;
+          min-height: 1.2em;
+      }
   </style>
 </head>
 <body>
@@ -148,6 +182,146 @@
       <p><strong>Tools used:</strong> <%= @tools.join(", ") %></p>
     </div>
   </div>
+
+  <div class="ai-assist-section">
+    <h2>Ask an AI About These Findings</h2>
+    <p>Copy a summary of these findings and open it in a chatbot you already use. Nothing is sent anywhere
+      automatically, no API key is involved, and you choose which AI &mdash; if any &mdash; sees the data.</p>
+    <div class="ai-assist-buttons">
+      <button type="button" id="ai-copy-btn">Copy prompt</button>
+      <button type="button" data-ai-open="https://claude.ai/new">Open in Claude</button>
+      <button type="button" data-ai-open="https://chatgpt.com/">Open in ChatGPT</button>
+      <button type="button" data-ai-open="https://gemini.google.com/app">Open in Gemini</button>
+    </div>
+    <p id="ai-assist-status" class="ai-assist-status" aria-live="polite"></p>
+  </div>
+
+  <script>
+      window.STATICA_FINDINGS = <%= @results.map(&:to_h).to_json %>;
+      window.STATICA_META = {
+          repoUrl: <%= ENV['REPO_URL'].to_s.to_json %>,
+          repoBranch: <%= ENV['REPO_BRANCH'].to_s.to_json %>,
+          commitSha: <%= ENV['LATEST_COMMIT_SHA'].to_s.to_json %>,
+          scanDate: <%= @scan_date.to_s.to_json %>,
+          tools: <%= @tools.to_json %>
+      };
+  </script>
+
+  <script>
+      (function () {
+          var MAX_FILES_PER_RULE = 10;
+          var SEVERITY_ORDER = ['error', 'warning', 'note'];
+
+          function decodeEntities(str) {
+              var el = document.createElement('textarea');
+              el.innerHTML = str;
+              return el.value;
+          }
+
+          function buildPrompt() {
+              var findings = window.STATICA_FINDINGS || [];
+              var meta = window.STATICA_META || {};
+              var bySeverity = {};
+
+              findings.forEach(function (f) {
+                  bySeverity[f.severity] = bySeverity[f.severity] || {};
+                  var group = bySeverity[f.severity][f.rule_id] || {
+                      description: decodeEntities(f.description),
+                      tool: f.tool,
+                      locations: []
+                  };
+                  group.locations.push(f.linenum > 0 ? (f.file_url + ':' + f.linenum) : f.file_url);
+                  bySeverity[f.severity][f.rule_id] = group;
+              });
+
+              var lines = [];
+              lines.push('I ran a static application security testing (SAST) scan on my codebase and want your opinion on the results.');
+              lines.push('');
+              lines.push('Repository: ' + (meta.repoUrl || 'unknown') + ' (branch ' + (meta.repoBranch || 'unknown') + ', commit ' + (meta.commitSha || 'unknown') + ')');
+              lines.push('Scan date: ' + (meta.scanDate || 'unknown'));
+              lines.push('Tools used: ' + ((meta.tools && meta.tools.join(', ')) || 'unknown'));
+              lines.push('Total findings: ' + findings.length);
+              lines.push('');
+
+              SEVERITY_ORDER.forEach(function (severity) {
+                  var rules = bySeverity[severity];
+                  if (!rules) return;
+
+                  lines.push('== ' + severity.toUpperCase() + ' ==');
+                  Object.keys(rules).forEach(function (ruleId) {
+                      var group = rules[ruleId];
+                      var count = group.locations.length;
+                      lines.push('- ' + ruleId + ' [' + group.tool + '] (' + count + ' occurrence' + (count === 1 ? '' : 's') + ')');
+                      lines.push('  ' + group.description);
+                      var shown = group.locations.slice(0, MAX_FILES_PER_RULE);
+                      var more = count - shown.length;
+                      lines.push('  Files: ' + shown.join(', ') + (more > 0 ? ', and ' + more + ' more' : ''));
+                  });
+                  lines.push('');
+              });
+
+              lines.push('Please tell me: which of these vulnerabilities are of real concern, what could or ' +
+                  'should be changed to address them, and which should be fixed first.');
+
+              return lines.join('\n');
+          }
+
+          function copyText(text) {
+              if (navigator.clipboard && window.isSecureContext) {
+                  return navigator.clipboard.writeText(text);
+              }
+
+              // navigator.clipboard requires a secure context, which a report opened
+              // directly via file:// does not reliably get. Fall back to the classic
+              // hidden-textarea + execCommand trick so "Copy prompt" still works there.
+              var textarea = document.createElement('textarea');
+              textarea.value = text;
+              textarea.setAttribute('readonly', '');
+              textarea.style.position = 'fixed';
+              textarea.style.opacity = '0';
+              document.body.appendChild(textarea);
+              textarea.focus();
+              textarea.select();
+              try {
+                  document.execCommand('copy');
+              } finally {
+                  document.body.removeChild(textarea);
+              }
+              return Promise.resolve();
+          }
+
+          document.addEventListener('DOMContentLoaded', function () {
+              var status = document.getElementById('ai-assist-status');
+
+              function setStatus(message) {
+                  status.textContent = message;
+              }
+
+              var copyBtn = document.getElementById('ai-copy-btn');
+              if (copyBtn) {
+                  copyBtn.addEventListener('click', function () {
+                      copyText(buildPrompt()).then(function () {
+                          setStatus('Copied to clipboard.');
+                      }, function () {
+                          setStatus('Could not copy automatically — please select and copy the prompt manually.');
+                      });
+                  });
+              }
+
+              Array.prototype.forEach.call(document.querySelectorAll('[data-ai-open]'), function (btn) {
+                  btn.addEventListener('click', function () {
+                      var url = btn.getAttribute('data-ai-open');
+                      copyText(buildPrompt()).then(function () {
+                          setStatus('Copied to clipboard — paste it into the chat that just opened.');
+                      }, function () {
+                          setStatus('Could not copy automatically — please copy the prompt manually before pasting.');
+                      });
+                      window.open(url, '_blank', 'noopener');
+                  });
+              });
+          });
+      })();
+  </script>
 
   <div class="graph-section">
     <h2>Findings Graph</h2>
