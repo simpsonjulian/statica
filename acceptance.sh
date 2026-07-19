@@ -7,6 +7,10 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 set -euo pipefail
 
+# Homebrew's Linux build sandbox (bwrap) breaks staging of from-source tap
+# formulae (Errno::EINVAL @ apply2files) on GitHub runners
+export HOMEBREW_NO_SANDBOX_LINUX=1
+
 brew install semgrep \
     jq \
     retire \
