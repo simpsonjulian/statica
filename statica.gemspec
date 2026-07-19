@@ -26,6 +26,10 @@ Gem::Specification.new do |spec|
     'tools.d/*'
   ]
 
+  # stdlib gems no longer shipped as default gems (csv: Ruby 3.4, ostruct: Ruby 4.0)
+  spec.add_dependency 'csv', '~> 3.3'
+  spec.add_dependency 'ostruct', '~> 0.6'
+
   spec.bindir        = '.'
   spec.executables   = %w[statica csv2sarif]
   spec.require_paths = ['.']

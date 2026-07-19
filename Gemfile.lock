@@ -2,15 +2,19 @@ PATH
   remote: .
   specs:
     statica (0.1.0)
+      csv (~> 3.3)
+      ostruct (~> 0.6)
 
 GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.3)
+    csv (3.3.5)
     diff-lcs (1.6.2)
     json (2.18.1)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
+    ostruct (0.6.3)
     pairing_heap (3.1.0)
     parallel (1.27.0)
     parser (3.3.10.1)
