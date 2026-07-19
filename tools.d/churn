@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -euo pipefail
 which git > /dev/null || exit 1
 
 source=$1
