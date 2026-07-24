@@ -11,10 +11,18 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
-      
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
   - package-ecosystem: "bundler" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
     cooldown:
       default-days: 7
+    groups:
+      gems:
+        patterns:
+          - "*"
