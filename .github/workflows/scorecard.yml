@@ -19,11 +19,6 @@ jobs:
   analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
-    permissions:
-      # Needed to upload the results to code-scanning dashboard.
-      security-events: write
-      # Needed to publish results and get a badge (see publish_results below).
-      id-token: write
 
     steps:
       - name: Checkout code
@@ -34,25 +29,25 @@ jobs:
       - name: Run analysis
         uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
         with:
-          results_file: results.sarif
-          results_format: sarif
-          # Publish results to OpenSSF REST API for easy access by consumers.
-          # Allows the repository to include the Scorecard badge, and enables
-          # inclusion in the OpenSSF Scorecard viewer at
-          # https://scorecard.dev/viewer/?uri=github.com/simpsonjulian/statica
-          publish_results: true
+          results_file: results.json
+          results_format: json
+          publish_results: false
 
-      # Upload the results as artifacts (optional). Commenting out will disable
-      # uploads of run results in SARIF format to the repository Actions tab.
+      - name: Render results
+        run: |
+          {
+            echo "## Scorecard results"
+            echo ""
+            jq -r '"**Overall score: \(.score)/10** (scorecard \(.scorecard.version), \(.date))"' results.json
+            echo ""
+            echo "| Score | Check | Reason |"
+            echo "|-------|-------|--------|"
+            jq -r '.checks | sort_by(.score) | .[] | "| \(.score) | \(.name) | \(.reason) |"' results.json
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: SARIF file
-          path: results.sarif
+          name: scorecard-results
+          path: results.json
           retention-days: 5
-
-      # Upload the results to GitHub's code scanning dashboard.
-      - name: Upload to code-scanning
-        uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a # v4.36.3
-        with:
-          sarif_file: results.sarif
