@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    statica (0.1.0)
+    statica (1.2.8)
       csv (~> 3.3)
       ostruct (~> 0.6)
 

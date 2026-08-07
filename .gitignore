@@ -7,3 +7,6 @@ WebGoat
 /experimental.d/
 .prisma.*
 .DS_Store
+
+# built gems
+*.gem
