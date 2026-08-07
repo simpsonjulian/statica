@@ -29,5 +29,8 @@ jobs:
 
         run: |
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          # The runner image pins an old Homebrew and disables auto-update, which
+          # cannot parse current homebrew-core formulae ("unknown install step").
+          brew update
           brew install actionlint
           make test

@@ -11,6 +11,10 @@ set -euo pipefail
 # formulae (Errno::EINVAL @ apply2files) on GitHub runners
 export HOMEBREW_NO_SANDBOX_LINUX=1
 
+# The runner image pins an old Homebrew and disables auto-update, which cannot
+# parse current homebrew-core formulae ("unknown install step: ...")
+brew update
+
 brew install semgrep \
     jq \
     retire \
