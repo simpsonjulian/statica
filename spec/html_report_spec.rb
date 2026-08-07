@@ -118,5 +118,37 @@ RSpec.describe 'SarifReport' do
       expect(report.results.first.description).to match 'Suspicious use of netcat with IP address'
       expect(report.results.first.severity).to eq 'error'
     end
+
+    context 'with findings that are not file-scoped' do
+      # Named distinctly because the enclosing context assigns a plain local
+      # variable called 'report', which would lexically shadow a let of that name.
+      let(:topology_report) { HtmlReport.new('spec/fixtures/logical_location.sarif', nil).generate }
+
+      # This used to raise NoMethodError on the missing physicalLocation, which
+      # took down the whole report rather than the one result - every other
+      # tool's findings went with it.
+      it 'reads a result carrying only a logicalLocation' do
+        finding = topology_report.results.first
+
+        expect(finding.file_url).to be_nil
+        expect(finding.logical_location).to eq 'origin/release/1.8'
+        expect(finding.severity).to eq 'error'
+      end
+
+      it 'still reads file-scoped results in the same run' do
+        finding = topology_report.results.last
+
+        expect(finding.file_url).to eq 'src/main/java/Payment.java'
+        expect(finding.logical_location).to be_nil
+      end
+
+      it 'renders them without a dead file link' do
+        HtmlReport.new('spec/fixtures/logical_location.sarif', 'logical.html').generate.publish
+        html = File.read('logical.html')
+
+        expect(html).to match 'origin/release/1.8'
+        expect(html).not_to match 'href="file://.*release/1.8"'
+      end
+    end
   end
 end

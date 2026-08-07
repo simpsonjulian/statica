@@ -87,6 +87,12 @@
           margin: 20px 0;
       }
 
+      /* Findings scoped to a ref rather than a file have nothing to link to */
+      .logical-location {
+          font-family: monospace;
+          color: #555;
+      }
+
       .hotspot-files table {
           width: 100%;
           border-collapse: collapse;
@@ -230,7 +236,12 @@
                       tool: f.tool,
                       locations: []
                   };
-                  group.locations.push(f.linenum > 0 ? (f.file_url + ':' + f.linenum) : f.file_url);
+                  if (!f.file_url) {
+                      // Ref-scoped finding: no file to cite, so name the branch instead
+                      group.locations.push(f.logical_location || 'repository');
+                  } else {
+                      group.locations.push(f.linenum > 0 ? (f.file_url + ':' + f.linenum) : f.file_url);
+                  }
                   bySeverity[f.severity][f.rule_id] = group;
               });
 
@@ -350,7 +361,11 @@
       <ul>
         <% results_matching.each do |finding| %>
           <li>
-            <a href="<%= get_url(finding.file_url, finding.linenum) %>" target="_blank"><%= finding.file_url %></a><%= finding.linenum > 0 ? ":#{finding.linenum}" : nil %>
+            <% if finding.file_url %>
+              <a href="<%= get_url(finding.file_url, finding.linenum) %>" target="_blank"><%= finding.file_url %></a><%= finding.linenum > 0 ? ":#{finding.linenum}" : nil %>
+            <% else %>
+              <span class="logical-location"><%= finding.logical_location || 'repository' %></span>
+            <% end %>
           </li>
         <% end %>
       </ul>

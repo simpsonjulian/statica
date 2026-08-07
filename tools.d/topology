@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../topology_analyzer'
+
+source = ARGV[0]
+
+unless source
+  warn 'Usage: topology <path to app source>'
+  exit 1
+end
+
+analyzer = TopologyAnalyzer.new(source)
+findings = analyzer.run
+analyzer.notes.each { |note| warn "topology: #{note}" }
+
+# Always emit a valid SARIF document, even when there is nothing to say. Source
+# that arrived without a repository is the normal case for Statica, not a
+# failure, and exiting non-zero here would report it as one.
+puts analyzer.sarif_json(findings)

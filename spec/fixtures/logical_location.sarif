@@ -1,0 +1,58 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "topology",
+          "version": "2.51.0",
+          "informationUri": "https://github.com/simpsonjulian/statica",
+          "organization": "simpsonjulian",
+          "rules": []
+        }
+      },
+      "results": [
+        {
+          "ruleId": "branch-never-merged",
+          "level": "error",
+          "message": {
+            "text": "Branch 'release/1.8' was last committed to 400 days ago and has never been merged into main."
+          },
+          "locations": [
+            {
+              "logicalLocations": [
+                {
+                  "name": "origin/release/1.8",
+                  "fullyQualifiedName": "origin/release/1.8"
+                }
+              ]
+            }
+          ],
+          "partialFingerprints": {
+            "topology/v1": "branch-never-merged:release/1.8"
+          }
+        },
+        {
+          "ruleId": "merge-high-overlap",
+          "level": "warning",
+          "message": {
+            "text": "Merge abc123def456 had to reconcile 14 files changed on both sides."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main/java/Payment.java"
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "topology/v1": "merge-high-overlap:abc123def456"
+          }
+        }
+      ]
+    }
+  ]
+}

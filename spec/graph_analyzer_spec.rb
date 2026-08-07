@@ -252,4 +252,36 @@ RSpec.describe GraphAnalyzer do
       expect(%w[HAS IN]).to include(edge['label'])
     end
   end
+
+  describe 'findings with no file' do
+    let(:ref_scoped) do
+      OpenStruct.new(
+        tool: 'topology',
+        rule_id: 'branch-never-merged',
+        file_url: nil,
+        severity: 'error',
+        description: 'Branch never merged',
+        linenum: 0
+      )
+    end
+
+    it 'hangs them off their analysis without inventing a file node' do
+      analyzer.analyze([ref_scoped])
+
+      expect(analyzer.graph.vertices).to contain_exactly(
+        'analysis:topology', 'finding:branch-never-merged:0'
+      )
+    end
+
+    # A synthetic file node would put a file nobody touched into the hotspot
+    # table on the strength of a finding that was never about a file.
+    it 'keeps them out of the hotspot counts' do
+      analyzer.analyze(sample_results + [ref_scoped])
+
+      file_nodes = analyzer.graph.vertices.select { |v| v.start_with?('file:') }
+
+      expect(file_nodes).not_to include('file:')
+      expect(analyzer.densely_connected_subgraph(1)[:nodes]).not_to include('finding:branch-never-merged:7')
+    end
+  end
 end

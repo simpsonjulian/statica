@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
     'csv2sarif',
     'graph_analyzer.rb',
     'html_report.rb',
+    'topology_analyzer.rb',
     'template.erb',
     'tools.d/*'
   ]

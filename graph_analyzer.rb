@@ -28,17 +28,22 @@ class GraphAnalyzer
     results.each_with_index do |result, idx|
       analysis_node = "analysis:#{result.tool}"
       finding_node = "finding:#{result.rule_id}:#{idx}"
-      file_url = self.class.normalize_file_url(result.file_url, source_root)
-      file_node = "file:#{file_url}"
 
-      # Add nodes with types
       add_node(analysis_node, 'analysis', result.tool)
       add_node(finding_node, 'finding', result.rule_id)
-      add_node(file_node, 'file', file_url)
-
-      # Add edges with types
       add_edge(analysis_node, finding_node, 'HAS')
-      add_edge(finding_node, file_node, 'IN')
+
+      # A finding scoped to a ref rather than a file has no file node to point
+      # at. Hanging it off a synthetic one would inflate that file's finding
+      # count and put it in the hotspot table on the strength of a finding that
+      # was never about a file, so it stays a leaf under its analysis instead.
+      file_url = nil
+      if result.file_url
+        file_url = self.class.normalize_file_url(result.file_url, source_root)
+        file_node = "file:#{file_url}"
+        add_node(file_node, 'file', file_url)
+        add_edge(finding_node, file_node, 'IN')
+      end
 
       # Store finding details
       @finding_details[finding_node] = {

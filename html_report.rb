@@ -92,17 +92,24 @@ class HtmlReport
 
   def format_result(result, report)
     rule_id = result.rule_id
-    region = result.locations[0].physical_location.region
     run = report.runs.first
     severity = find_severity(result, run)
-    region = region ? region.start_line : 0
-    file_location = result.locations[0].physical_location.artifact_location.uri
+
+    # Not every finding is file-scoped. A finding about a branch or a ref has
+    # nowhere sensible to point in the tree and carries a logicalLocation
+    # instead, so every step down to the physicalLocation has to be optional -
+    # this used to dereference blind, and one such result took down the whole
+    # report rather than just itself.
+    location = result.locations&.first
+    physical = location&.physical_location
+    region = physical&.region
     tool = run.tool.driver.name
 
     OpenStruct.new({ severity: severity,
                      description: CGI.escapeHTML(result.message.text),
-                     linenum: region,
-                     file_url: file_location,
+                     linenum: region ? region.start_line : 0,
+                     file_url: physical&.artifact_location&.uri,
+                     logical_location: location&.logical_locations&.first&.name,
                      rule_id: GraphAnalyzer.clean_rule_id(rule_id),
                      tool: tool })
   end
