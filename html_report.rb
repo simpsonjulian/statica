@@ -67,27 +67,31 @@ class HtmlReport
     end
   end
 
+  # CodeQL ships its rules in tool extensions (packs) rather than on the driver.
+  def severity_from_extensions(extensions, rule_id)
+    extensions.each do |extension|
+      extension.rules.each do |rule|
+        return rule.default_configuration.level if rule.id == rule_id
+      end
+    end
+    nil
+  end
+
+  def severity_from_rules(rules, rule_id)
+    rules.find { |rule| rule.id == rule_id }&.default_configuration&.level
+  end
+
+  # A result may carry its own level, or defer to the level configured on its rule.
   def find_severity(result, run)
     rule_id = result.rule_id
     tool = run.tool
     driver = tool.driver
 
-    rules = driver.rules
-    if result.respond_to?(:level)
-      result.level
-    elsif tool.extensions # codeql with packs
-      tool.extensions.map do |e|
-        e.rules.map do |r|
-          return r.default_configuration.level if r.id == rule_id
-        end
-      end
+    return result.level if result.respond_to?(:level)
+    return severity_from_extensions(tool.extensions, rule_id) if tool.extensions
+    return severity_from_rules(driver.rules, rule_id) if driver.rules&.length&.positive?
 
-    elsif rules&.length&.positive? # severity comes from the rule
-      rule = rules.select { |r| r.id == rule_id }.first
-      rule.default_configuration.level
-    else
-      raise "can't work out where to find rules for #{rule_id}, #{tool}, #{driver}"
-    end
+    raise "can't work out where to find rules for #{rule_id}, #{tool}, #{driver}"
   end
 
   # Most tools report a file and a line. Some report a thing that has no file at all -
@@ -98,31 +102,40 @@ class HtmlReport
   def locate(result)
     location = result.locations&.first
     physical = location&.physical_location
-    if physical
-      region = physical.region
-      return { label: physical.artifact_location.uri, linenum: region ? region.start_line : 0, kind: 'file' }
-    end
+    return physical_location_of(physical) if physical
 
-    logical = location&.logical_locations&.first
-    { label: logical&.fully_qualified_name || logical&.name || '(no location)', linenum: 0,
+    logical_location_of(location&.logical_locations&.first)
+  end
+
+  def physical_location_of(physical)
+    region = physical.region
+    { label: physical.artifact_location.uri, linenum: region ? region.start_line : 0, kind: 'file' }
+  end
+
+  def logical_location_of(logical)
+    { label: logical&.fully_qualified_name || logical&.name || '(no location)',
+      linenum: 0,
       kind: logical&.kind || 'other' }
   end
 
   def format_result(result, report)
-    rule_id = result.rule_id
     run = report.runs.first
-    severity = find_severity(result, run)
-    tool = run.tool.driver.name
     where = locate(result)
 
-    OpenStruct.new({ severity: severity,
-                     description: CGI.escapeHTML(result.message.text),
-                     linenum: where[:linenum],
-                     file_url: where[:label],
-                     location_kind: where[:kind],
-                     linkable: where[:kind] == 'file',
-                     rule_id: GraphAnalyzer.clean_rule_id(rule_id),
-                     tool: tool })
+    OpenStruct.new(severity: find_severity(result, run),
+                   description: CGI.escapeHTML(result.message.text),
+                   **where_fields(where),
+                   rule_id: GraphAnalyzer.clean_rule_id(result.rule_id),
+                   tool: run.tool.driver.name)
+  end
+
+  # The location half of a template row: where the finding is, and whether that is
+  # something an editor can be pointed at.
+  def where_fields(where)
+    { linenum: where[:linenum],
+      file_url: where[:label],
+      location_kind: where[:kind],
+      linkable: where[:kind] == 'file' }
   end
 
   def extract_results
@@ -168,15 +181,15 @@ class HtmlReport
     end
   end
 
-  def command_exists(command)
+  def command_exists?(command)
     `which  #{command} 2>/dev/null`
     $CHILD_STATUS.success?
   end
 
   def get_url(url, line)
-    if command_exists('mvim')
+    if command_exists?('mvim')
       get_url_for_browser(url, :vim, line)
-    elsif command_exists('code')
+    elsif command_exists?('code')
       get_url_for_browser(url, :vscode, line)
     else
       get_url_for_browser(url, nil, nil)

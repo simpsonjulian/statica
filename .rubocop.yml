@@ -1,0 +1,37 @@
+AllCops:
+  TargetRubyVersion: 3.0
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'prisma.log_IS_UNDEFINED/**/*'
+
+
+# html_report builds row objects purely to hand to ERB, and the specs construct the same
+# shape. OpenStruct is the deliberate choice there - it is a declared runtime dependency
+# in the gemspec - and swapping it for a Struct would only move the same data around.
+Style/OpenStructUse:
+  Exclude:
+    - 'html_report.rb'
+    - 'spec/**/*'
+
+# These tools are mostly declarative: a SARIF document, a rule table, a vis.js node.
+# A multi-line hash or array literal is one idea, not N lines of logic, so count it as
+# one. Genuine branching is still measured by the complexity cops below.
+Metrics/MethodLength:
+  CountAsOne: ['array', 'hash', 'heredoc']
+
+# Each of these is one cohesive job - build the finding graph, render the report, find
+# unreferenced files - and splitting them to satisfy the default 100 would scatter that
+# job across files for no reader's benefit. Extracting the small methods the other
+# Metrics cops ask for pushes this number up rather than down, so allow the headroom.
+Metrics/ClassLength:
+  CountAsOne: ['array', 'hash', 'heredoc']
+  Max: 150
+
+# RSpec's describe/context blocks and a gemspec body are DSLs: their length reflects how
+# much is being specified, not a method that grew too big.
+Metrics/BlockLength:
+  CountAsOne: ['array', 'hash', 'heredoc']
+  Exclude:
+    - 'spec/**/*'
+    - '*.gemspec'

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rgl/adjacency'
 require 'rgl/traversal'
 require 'json'
@@ -24,35 +26,42 @@ class GraphAnalyzer
     @edge_types[[from, to]] = edge_type
   end
 
+  # Most findings sit in a file, but some sit on a branch or a commit and have no file
+  # at all. Namespacing the node by what it actually is keeps a branch from being
+  # counted, coloured or linked as though it were a source file. Returns [node, label].
+  def location_node_for(result, source_root)
+    kind = result.location_kind || 'file'
+    label = kind == 'file' ? self.class.normalize_file_url(result.file_url, source_root) : result.file_url
+
+    ["#{kind}:#{label}", kind, label]
+  end
+
+  # One finding as (analysis)-[:HAS]->(finding)-[:IN]->(location), plus the detail the
+  # rendered graph shows when you hover it.
+  def record_finding(result, finding_node, location_node, kind, label)
+    analysis_node = "analysis:#{result.tool}"
+
+    add_node(analysis_node, 'analysis', result.tool)
+    add_node(finding_node, 'finding', result.rule_id)
+    add_node(location_node, kind, label)
+    add_edge(analysis_node, finding_node, 'HAS')
+    add_edge(finding_node, location_node, 'IN')
+
+    @finding_details[finding_node] = {
+      rule_id: result.rule_id,
+      severity: result.severity,
+      description: result.description,
+      linenum: result.linenum,
+      tool: result.tool,
+      file: label
+    }
+  end
+
   def analyze(results, source_root: nil)
     results.each_with_index do |result, idx|
-      analysis_node = "analysis:#{result.tool}"
       finding_node = "finding:#{result.rule_id}:#{idx}"
-      # Most findings sit in a file, but some sit on a branch or a commit and have no
-      # file at all. Namespace the node by what it actually is so a branch never gets
-      # counted, coloured or linked as though it were a source file.
-      kind = result.location_kind || 'file'
-      label = kind == 'file' ? self.class.normalize_file_url(result.file_url, source_root) : result.file_url
-      location_node = "#{kind}:#{label}"
-
-      # Add nodes with types
-      add_node(analysis_node, 'analysis', result.tool)
-      add_node(finding_node, 'finding', result.rule_id)
-      add_node(location_node, kind, label)
-
-      # Add edges with types
-      add_edge(analysis_node, finding_node, 'HAS')
-      add_edge(finding_node, location_node, 'IN')
-
-      # Store finding details
-      @finding_details[finding_node] = {
-        rule_id: result.rule_id,
-        severity: result.severity,
-        description: result.description,
-        linenum: result.linenum,
-        tool: result.tool,
-        file: label
-      }
+      location_node, kind, label = location_node_for(result, source_root)
+      record_finding(result, finding_node, location_node, kind, label)
     end
 
     self
@@ -74,38 +83,42 @@ class GraphAnalyzer
       .delete_prefix("#{normalized_root}/")
   end
 
-  def densely_connected_subgraph(min_connections = 3)
-    # Find files with multiple findings
-    file_finding_counts = Hash.new(0)
+  # Locations carrying at least min_connections findings - the ones worth drawing.
+  def dense_locations(min_connections)
+    counts = Hash.new(0)
+    @graph.each_edge { |from, to| counts[to] += 1 if @edge_types[[from, to]] == 'IN' }
+    counts.select { |_, count| count >= min_connections }.keys
+  end
 
-    @graph.each_edge do |from, to|
-      file_finding_counts[to] += 1 if @edge_types[[from, to]] == 'IN'
+  # The analysis node that produced a finding, so the drawn subgraph stays connected
+  # back to the tool that reported it.
+  def collect_analysis_edges(finding_node, nodes, edges)
+    @graph.each_edge do |analysis, finding|
+      next unless finding == finding_node && @edge_types[[analysis, finding]] == 'HAS'
+
+      nodes.add(analysis)
+      edges << [analysis, finding]
     end
+  end
 
-    # Select only densely connected nodes
-    dense_files = file_finding_counts.select { |_, count| count >= min_connections }.keys
+  # Every finding reported against one location, plus the analyses that found them.
+  def collect_location_edges(location_node, nodes, edges)
+    @graph.each_edge do |from, to|
+      next unless to == location_node && @edge_types[[from, to]] == 'IN'
 
-    # Build subgraph with these files and their findings
+      nodes.add(from)
+      edges << [from, to]
+      collect_analysis_edges(from, nodes, edges)
+    end
+  end
+
+  def densely_connected_subgraph(min_connections = 3)
     nodes = Set.new
     edges = []
 
-    dense_files.each do |file_node|
-      nodes.add(file_node)
-
-      @graph.each_edge do |from, to|
-        next unless to == file_node && @edge_types[[from, to]] == 'IN'
-
-        nodes.add(from)
-        edges << [from, to]
-
-        # Also include the analysis node
-        @graph.each_edge do |analysis, finding|
-          if finding == from && @edge_types[[analysis, finding]] == 'HAS'
-            nodes.add(analysis)
-            edges << [analysis, finding]
-          end
-        end
-      end
+    dense_locations(min_connections).each do |location_node|
+      nodes.add(location_node)
+      collect_location_edges(location_node, nodes, edges)
     end
 
     { nodes: nodes.to_a, edges: edges }
@@ -129,69 +142,59 @@ class GraphAnalyzer
     file_tool_counts
   end
 
+  SEVERITY_COLOURS = { 'error' => '#e74c3c', 'warning' => '#f39c12' }.freeze
+  DEFAULT_SEVERITY_COLOUR = '#3498db'
+
+  # Just the readable part of a node id: the rule name without the temp-directory
+  # prefix a tool may have baked into it, or the filename without its path.
+  def node_label(node, type)
+    raw_label = node.split(':')[1..].join(':')
+
+    case type
+    when 'finding' then GraphAnalyzer.clean_rule_id(raw_label)
+    when 'file' then raw_label.split('/').last
+    else raw_label
+    end
+  end
+
+  # [colour, shape, mass, value]. Mass and value decide how strongly vis.js pulls a node
+  # towards the centre, so a file flagged by several tools sits where the eye lands.
+  FIXED_STYLES = { 'analysis' => ['#97C2FC', 'box', 2, 10] }.freeze
+  FALLBACK_STYLE = ['#CCCCCC', 'dot', 1, 5].freeze
+
+  def node_style(node, type, tool_count)
+    return FIXED_STYLES[type] if FIXED_STYLES.key?(type)
+    return [severity_colour(node), 'ellipse', 1, 5] if type == 'finding'
+    return ['#7BE141', 'ellipse', tool_count * 3, 10 + (tool_count * 5)] if type == 'file'
+
+    FALLBACK_STYLE
+  end
+
+  def severity_colour(node)
+    SEVERITY_COLOURS.fetch(@finding_details[node]&.dig(:severity), DEFAULT_SEVERITY_COLOUR)
+  end
+
+  def visjs_node(node, file_tool_counts)
+    type = @node_types[node]
+    tool_count = type == 'file' ? (file_tool_counts[node] || 1) : nil
+    colour, shape, mass, value = node_style(node, type, tool_count)
+
+    { id: node,
+      label: node_label(node, type),
+      color: colour,
+      shape: shape,
+      title: tool_count && tool_count > 1 ? "#{type} (#{tool_count} tools)" : type,
+      mass: mass,
+      value: value }
+  end
+
   def to_visjs_json(min_connections = 3)
     subgraph = densely_connected_subgraph(min_connections)
 
     # Calculate tool count per file for positioning
     file_tool_counts = calculate_file_tool_counts(subgraph[:nodes])
 
-    nodes = subgraph[:nodes].map do |node|
-      type = @node_types[node]
-      raw_label = node.split(':')[1..].join(':')
-
-      # Clean up labels for better readability
-      label = case type
-              when 'finding'
-                # Extract just the rule name, removing temp paths
-                # Handle formats like: "tmp.XXX.community.rule.name" -> "community.rule.name"
-                GraphAnalyzer.clean_rule_id(raw_label)
-              when 'file'
-                # Just show filename, not full path
-                raw_label.split('/').last
-              else
-                raw_label
-              end
-
-      # Get tool count for files
-      tool_count = type == 'file' ? (file_tool_counts[node] || 1) : nil
-
-      # Determine node styling and properties
-      color, shape, mass, value = case type
-                                  when 'analysis'
-                                    ['#97C2FC', 'box', 2, 10]
-                                  when 'finding'
-                                    severity = @finding_details[node]&.dig(:severity)
-                                    color = case severity
-                                            when 'error' then '#e74c3c'
-                                            when 'warning' then '#f39c12'
-                                            else '#3498db'
-                                            end
-                                    [color, 'ellipse', 1, 5]
-                                  when 'file'
-                                    # Files with more tools get higher mass/value (drawn to center)
-                                    mass_value = tool_count * 3
-                                    size_value = 10 + (tool_count * 5)
-                                    ['#7BE141', 'ellipse', mass_value, size_value]
-                                  else
-                                    ['#CCCCCC', 'dot', 1, 5]
-                                  end
-
-      title_text = if tool_count && tool_count > 1
-                     "#{type} (#{tool_count} tools)"
-                   else
-                     type
-                   end
-
-      {
-        id: node,
-        label: label,
-        color: color,
-        shape: shape,
-        title: title_text,
-        mass: mass,
-        value: value
-      }
-    end
+    nodes = subgraph[:nodes].map { |node| visjs_node(node, file_tool_counts) }
 
     edges = subgraph[:edges].map do |from, to|
       {
@@ -214,7 +217,7 @@ class GraphAnalyzer
     # Find where the actual rule starts (after tmp.XXX)
     tmp_idx = parts.index { |p| p.start_with?('tmp') }
     if tmp_idx && tmp_idx + 2 < parts.length
-      parts[(tmp_idx + 2)..-1].join('.')
+      parts[(tmp_idx + 2)..].join('.')
     else
       # Fallback: take last 4 parts
       parts.last(4).join('.')

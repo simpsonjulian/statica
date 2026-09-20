@@ -11,12 +11,14 @@ EXIT_SUCCESS = 0
 EXIT_ISSUES = 1
 EXIT_ERROR = 2
 
+# The kinds of file this tool knows how to look for.
 class FileType
   JAVASCRIPT = 'JavaScript'
   DLL = 'DLL'
   JAR = 'JAR'
 end
 
+# One unreferenced file, with whatever identifying metadata we could read from it.
 class Finding
   attr_reader :file_path, :file_type, :metadata
 
@@ -27,7 +29,14 @@ class Finding
   end
 end
 
+# Looks for tracked files of interest that nothing else in the repository mentions.
 class Checker
+  # Tags worth reporting from a PE version resource, best first.
+  DLL_METADATA_TAGS = %w[FileDescription FileVersion ProductName CompanyName].freeze
+
+  # Manifest entries worth reporting from a JAR.
+  JAR_MANIFEST_KEYS = %w[Implementation-Title Implementation-Version].freeze
+
   def initialize(directory)
     @root_dir = File.expand_path(directory)
   end
@@ -57,45 +66,48 @@ class Checker
     end
   end
 
-  # Tags worth reporting from a PE version resource, best first.
-  DLL_METADATA_TAGS = %w[FileDescription FileVersion ProductName CompanyName].freeze
-
   # exiftool reads the PE version resource itself. The previous approach - strings(1)
   # filtered for lines mentioning "Version" or "AssemblyTitle" - picked up whatever
   # string happened to come first, which on a .NET assembly is typically a *referenced*
   # assembly such as mscorlib rather than this file.
   def get_dll_metadata(file_path)
-    unless tool_available?('exiftool')
-      warn_once('exiftool', 'DLL version metadata will be omitted')
-      return ''
-    end
+    return '' unless exiftool?
 
     out = run('exiftool', '-json', *DLL_METADATA_TAGS.map { |t| "-#{t}" },
               File.join(@root_dir, file_path))
-    return '' unless out
-
-    tags = JSON.parse(out).first || {}
-    DLL_METADATA_TAGS.filter_map { |t| "#{t}: #{tags[t]}" if tags[t] }.take(2).join(', ')
+    out ? describe_tags(JSON.parse(out).first) : ''
   rescue JSON::ParserError
     ''
   end
 
+  # The two most informative tags exiftool could read, as "Tag: value".
+  def describe_tags(tags)
+    tags ||= {}
+    DLL_METADATA_TAGS.filter_map { |t| "#{t}: #{tags[t]}" if tags[t] }.take(2).join(', ')
+  end
+
+  def exiftool?
+    return true if tool_available?('exiftool')
+
+    warn_once('exiftool', 'DLL version metadata will be omitted')
+    false
+  end
+
+  def manifest_metadata(manifest)
+    metadata = []
+    manifest.get_input_stream.read.each_line do |line|
+      next unless JAR_MANIFEST_KEYS.any? { |key| line.include?(key) }
+
+      metadata << line.strip
+      break if metadata.size >= 2
+    end
+    metadata.join(' ')
+  end
+
   def get_jar_metadata(file_path)
-    full_path = File.join(@root_dir, file_path)
-
-    Zip::File.open(full_path) do |zip_file|
+    Zip::File.open(File.join(@root_dir, file_path)) do |zip_file|
       manifest = zip_file.find { |f| f.name == 'META-INF/MANIFEST.MF' }
-      return '' unless manifest
-
-      metadata = []
-      manifest.get_input_stream.read.each_line do |line|
-        if line.include?('Implementation-Title') || line.include?('Implementation-Version')
-          metadata << line.strip
-          break if metadata.size >= 2
-        end
-      end
-
-      return metadata.join(' ')
+      return manifest ? manifest_metadata(manifest) : ''
     end
 
     ''
@@ -121,36 +133,37 @@ class Checker
     csproj_contents.any? { |content| content.match?(/<HintPath>.+#{Regexp.escape(basename)}/i) }
   end
 
+  # Literal strings to look for: the filename, the filename without its extension, and
+  # the path without its extension.
+  def reference_patterns(file_path)
+    [File.basename(file_path),
+     File.basename(file_path, File.extname(file_path)),
+     file_path.sub(/\.[^.]+$/, '')].uniq
+  end
+
+  # True when some file other than file_path itself mentions the pattern. .csproj files
+  # are excluded because they are handled separately, by HintPath.
+  def mentioned_elsewhere?(pattern, file_path)
+    # --fixed-strings for exact string matching, --files-with-matches for names only
+    out = run('rg', '--fixed-strings', '--files-with-matches', '--', pattern, @root_dir)
+    return false unless out
+
+    out.each_line.any? do |line|
+      match_file = line.chomp.delete_prefix("#{@root_dir}/")
+      match_file != file_path && !match_file.downcase.end_with?('.csproj')
+    end
+  end
+
   def file_referenced?(file_path)
-    basename = File.basename(file_path)
-
-    # Search patterns to try (literal strings, not regex)
-    patterns = [
-      basename,
-      File.basename(file_path, File.extname(file_path)),
-      file_path.sub(/\.[^.]+$/, '')
-    ].uniq
-
     unless tool_available?('rg')
       warn "Error: 'rg' is not installed. Install it with: brew install ripgrep"
       exit EXIT_ERROR
     end
 
     # First check if file is referenced in .csproj files as a <Reference>
-    return true if file_referenced_in_csproj?(basename)
+    return true if file_referenced_in_csproj?(File.basename(file_path))
 
-    patterns.any? do |pattern|
-      # --fixed-strings for exact string matching, --files-with-matches for names only
-      out = run('rg', '--fixed-strings', '--files-with-matches', '--', pattern, @root_dir)
-      next false unless out
-
-      out.each_line.any? do |line|
-        match_file = line.chomp.delete_prefix("#{@root_dir}/")
-
-        # Skip if it's the file itself or a .csproj file
-        match_file != file_path && !match_file.downcase.end_with?('.csproj')
-      end
-    end
+    reference_patterns(file_path).any? { |pattern| mentioned_elsewhere?(pattern, file_path) }
   end
 
   public
@@ -219,6 +232,43 @@ def output_text(findings)
   end
 end
 
+DEPSPOT_URI = 'https://github.com/simpsonjulian/depspot'
+
+RULES = {
+  FileType::JAVASCRIPT => ['unreferenced-javascript', 'JavaScript file not referenced in codebase'],
+  FileType::DLL => ['unreferenced-dll', 'DLL file not referenced in codebase'],
+  FileType::JAR => ['unreferenced-jar', 'JAR file not referenced in codebase']
+}.freeze
+
+def sarif_rules
+  RULES.map do |_type, (id, description)|
+    Sarif::ReportingDescriptor.new(
+      id: id,
+      short_description: Sarif::MultiformatMessageString.new(text: description),
+      help_uri: DEPSPOT_URI
+    )
+  end
+end
+
+def sarif_result(finding)
+  rule_id, = RULES[finding.file_type]
+  message = "#{finding.file_type} file not referenced in codebase"
+  message += " (#{finding.metadata})" if finding.metadata && !finding.metadata.empty?
+
+  Sarif::Result.new(
+    rule_id: rule_id,
+    level: 'warning',
+    message: Sarif::Message.new(text: message),
+    locations: [
+      Sarif::Location.new(
+        physical_location: Sarif::PhysicalLocation.new(
+          artifact_location: Sarif::ArtifactLocation.new(uri: finding.file_path)
+        )
+      )
+    ]
+  )
+end
+
 def output_sarif(findings)
   sarif = Sarif::Log.new(
     version: '2.1.0',
@@ -226,59 +276,10 @@ def output_sarif(findings)
       Sarif::Run.new(
         tool: Sarif::Tool.new(
           driver: Sarif::ToolComponent.new(
-            name: 'depspot',
-            information_uri: 'https://github.com/simpsonjulian/depspot',
-            version: '1.0.0',
-            rules: [
-              Sarif::ReportingDescriptor.new(
-                id: 'unreferenced-javascript',
-                short_description: Sarif::MultiformatMessageString.new(
-                  text: 'JavaScript file not referenced in codebase'
-                ),
-                help_uri: 'https://github.com/simpsonjulian/depspot'
-              ),
-              Sarif::ReportingDescriptor.new(
-                id: 'unreferenced-dll',
-                short_description: Sarif::MultiformatMessageString.new(
-                  text: 'DLL file not referenced in codebase'
-                ),
-                help_uri: 'https://github.com/simpsonjulian/depspot'
-              ),
-              Sarif::ReportingDescriptor.new(
-                id: 'unreferenced-jar',
-                short_description: Sarif::MultiformatMessageString.new(
-                  text: 'JAR file not referenced in codebase'
-                ),
-                help_uri: 'https://github.com/simpsonjulian/depspot'
-              )
-            ]
+            name: 'depspot', information_uri: DEPSPOT_URI, version: '1.0.0', rules: sarif_rules
           )
         ),
-        results: findings.map do |f|
-          rule_id = case f.file_type
-                    when FileType::JAVASCRIPT then 'unreferenced-javascript'
-                    when FileType::DLL then 'unreferenced-dll'
-                    when FileType::JAR then 'unreferenced-jar'
-                    end
-
-          message = "#{f.file_type} file not referenced in codebase"
-          message += " (#{f.metadata})" if f.metadata && !f.metadata.empty?
-
-          Sarif::Result.new(
-            rule_id: rule_id,
-            level: 'warning',
-            message: Sarif::Message.new(text: message),
-            locations: [
-              Sarif::Location.new(
-                physical_location: Sarif::PhysicalLocation.new(
-                  artifact_location: Sarif::ArtifactLocation.new(
-                    uri: f.file_path
-                  )
-                )
-              )
-            ]
-          )
-        end
+        results: findings.map { |f| sarif_result(f) }
       )
     ]
   )
@@ -292,18 +293,20 @@ def output_sarif(findings)
 end
 
 def print_usage
-  puts 'Usage: depspot PATH [OPTIONS]'
-  puts ''
-  puts "Find project files that aren't referenced in code"
-  puts ''
-  puts 'Arguments:'
-  puts '  PATH               Directory to scan (required)'
-  puts ''
-  puts 'Options:'
-  puts '  --no-sarif         Output in plain text instead of SARIF format'
-  puts '  -h, --help         Show this help message'
-  puts ''
-  puts 'By default, outputs SARIF format and checks all file types (JavaScript, DLL, JAR).'
+  puts <<~USAGE
+    Usage: depspot PATH [OPTIONS]
+
+    Find project files that aren't referenced in code
+
+    Arguments:
+      PATH               Directory to scan (required)
+
+    Options:
+      --no-sarif         Output in plain text instead of SARIF format
+      -h, --help         Show this help message
+
+    By default, outputs SARIF format and checks all file types (JavaScript, DLL, JAR).
+  USAGE
 end
 
 # Parse command line options

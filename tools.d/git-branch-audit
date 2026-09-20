@@ -76,8 +76,35 @@ rescue SystemExit
 end
 default_ref = "#{remote}/#{default}"
 now         = Time.now.to_i
-cutoff      = now - opts[:days] * 86_400
+cutoff      = now - (opts[:days] * 86_400)
 warn "auditing #{File.expand_path(dir)} against #{default_ref} (threshold #{opts[:days]}d)"
+
+# Only work that originated on this branch and is not already on the default branch
+# counts. --no-merges drops the merge commit left behind when the default branch is
+# merged *into* a long-lived release branch: that commit is "ahead" by ancestry but
+# carries nothing of its own, which made every back-merged release branch report as
+# unmerged. --cherry-pick additionally drops commits whose patch already landed on the
+# default branch, which is how a release-branch fix is usually forward-ported.
+def unique_commits(dir, default_ref, branch)
+  git(dir, 'rev-list', '--no-commit-header', '--format=%h%x00%an%x00%s',
+      '--right-only', '--cherry-pick', '--no-merges', "#{default_ref}...#{branch}")
+    .each_line.filter_map do |l|
+      sha, author, subject = l.chomp.split("\0", 3)
+      next if sha.nil? || sha.empty? || sha.start_with?('commit ')
+
+      { sha: sha, author: author, subject: subject }
+    end
+end
+
+# Name the commits rather than only counting them, so a reader can tell an orphaned fix
+# from a release-only version bump without going to the shell. This goes in the message
+# as well as in properties, because a SARIF property bag is not rendered.
+def describe_commits(commits)
+  described = commits.map { |c| "#{c[:sha]} \"#{c[:subject]}\" by #{c[:author]}" }
+  summary = described.first(3).join('; ')
+  summary += "; +#{commits.size - 3} more" if commits.size > 3
+  summary
+end
 
 # ---------------------------------------------------------------- collection
 Branch = Struct.new(:name, :sha, :committed, :author)
@@ -109,7 +136,7 @@ add = lambda do |rule, target, sha, text, props = {}|
       ]
     )],
     partial_fingerprints: { 'gitObject/v1' => sha },
-    properties: props.reject { |k, _| k == :kind }
+    properties: props.except(:kind)
   )
 end
 
@@ -122,30 +149,11 @@ unmerged.each do |b|
   # below cannot see that the work already landed, but the content plainly has.
   next if git_succeeds?(dir, 'diff', '--quiet', default_ref, b.name)
 
-  # Only work that originated on this branch and is not already on the default branch
-  # counts. --no-merges drops the merge commit left behind when the default branch is
-  # merged *into* a long-lived release branch: that commit is "ahead" by ancestry but
-  # carries nothing of its own, which made every back-merged release branch report as
-  # unmerged. --cherry-pick additionally drops commits whose patch already landed on the
-  # default branch, which is how a release-branch fix is usually forward-ported.
-  unique  = git(dir, 'rev-list', '--no-commit-header', '--format=%h%x00%an%x00%s',
-                '--right-only', '--cherry-pick', '--no-merges',
-                "#{default_ref}...#{b.name}")
-            .each_line.filter_map do |l|
-              sha, author, subject = l.chomp.split("\0", 3)
-              next if sha.nil? || sha.empty? || sha.start_with?('commit ')
-
-              { sha: sha, author: author, subject: subject }
-            end
+  unique  = unique_commits(dir, default_ref, b.name)
   ahead   = unique.size
   next if ahead.zero?
 
-  # Name the commits rather than only counting them, so a reader can tell an orphaned
-  # fix from a release-only version bump without going to the shell. This goes in the
-  # message as well as in properties, because a SARIF property bag is not rendered.
-  described = unique.map { |c| "#{c[:sha]} \"#{c[:subject]}\" by #{c[:author]}" }
-  culprits  = described.first(3).join('; ')
-  culprits += "; +#{ahead - 3} more" if ahead > 3
+  culprits = describe_commits(unique)
 
   base    = git(dir, 'merge-base', default_ref, b.name).strip
   base_at = git(dir, 'log', '-1', '--format=%ct', base).strip.to_i
@@ -154,14 +162,16 @@ unmerged.each do |b|
 
   if protected_branch?(short, opts[:protected])
     add.call('UNMERGED', b.name, b.sha,
-             "Protected branch '#{short}' has #{ahead} commit(s) not on #{default}; a fix may never have been merged back. Unmerged: #{culprits}.",
+             "Protected branch '#{short}' has #{ahead} commit(s) not on #{default}; " \
+             "a fix may never have been merged back. Unmerged: #{culprits}.",
              ahead: ahead, lastAuthor: b.author, idleDays: idle_d, unmergedCommits: unique)
   end
 
   next unless base_at < cutoff && b.committed >= cutoff
 
   add.call('LONGLIVED', b.name, b.sha,
-           "Branch '#{short}' diverged from #{default} #{age_d} days ago and is still receiving commits (#{ahead} ahead); it is behaving like a parallel trunk. Ahead: #{culprits}.",
+           "Branch '#{short}' diverged from #{default} #{age_d} days ago and is still receiving " \
+           "commits (#{ahead} ahead); it is behaving like a parallel trunk. Ahead: #{culprits}.",
            ahead: ahead, divergedDays: age_d, lastAuthor: b.author, unmergedCommits: unique)
 end
 

@@ -60,7 +60,7 @@ RSpec.describe 'HtmlReport' do
     end
 
     it 'can find a command' do
-      expect(HtmlReport.new(nil, nil).command_exists('mkdir')).to eq true
+      expect(HtmlReport.new(nil, nil).command_exists?('mkdir')).to eq true
     end
 
     it 'gives a fully qualified path if needed' do
@@ -92,7 +92,8 @@ RSpec.describe 'SarifReport' do
     end
 
     it 'has a filename' do
-      expect(report.results.first.file_url).to eq 'file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js'
+      expect(report.results.first.file_url)
+        .to eq 'file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js'
     end
 
     it 'has a line number' do
@@ -109,7 +110,8 @@ RSpec.describe 'SarifReport' do
 
     it 'copes with codeql sarif output' do
       report = HtmlReport.new('spec/webgoat_codeql.sarif', nil).generate
-      expect(report.results.first.description).to match(/This data transmitted to the user depends on \[sensitive information\].*/)
+      expect(report.results.first.description)
+        .to match(/This data transmitted to the user depends on \[sensitive information\].*/)
       expect(report.results.first.severity).to eq 'warning'
     end
 

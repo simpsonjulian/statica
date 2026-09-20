@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 require 'json'
 require 'csv'
 
@@ -17,22 +19,26 @@ def severity_to_level(severity)
   mapping.key?(severity) ? mapping[severity] : severity
 end
 
-def add_result(rule_id, level, message, uri, start_line, end_line)
+# One row of the findings CSV, whose columns are, in order:
+#   rule_id, severity, message, uri, start_line, end_line
+def add_result(row)
+  rule_id, level, message, uri, start_line, end_line = row
+
   {
-    "ruleId": rule_id,
-    "level": severity_to_level(level),
-    "message": {
-      "text": message
+    ruleId: rule_id,
+    level: severity_to_level(level),
+    message: {
+      text: message
     },
-    "locations": [
+    locations: [
       {
-        "physicalLocation": {
-          "artifactLocation": {
-            "uri": uri
+        physicalLocation: {
+          artifactLocation: {
+            uri: uri
           },
-          "region": {
-            "startLine": Integer(start_line),
-            "endLine": Integer(end_line)
+          region: {
+            startLine: Integer(start_line),
+            endLine: Integer(end_line)
           }
         }
       }
@@ -52,7 +58,7 @@ sarif_data = { :$schema => 'https://raw.githubusercontent.com/oasis-tcs/sarif-sp
                ] }
 
 CSV.foreach(findings_csv) do |row|
-  results << add_result(*row)
+  results << add_result(row)
 end
 
 sarif_data[:runs][0][:results] = results
