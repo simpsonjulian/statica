@@ -34,6 +34,14 @@
           background-color: #ddd;
       }
 
+      /* A finding's own message, shown beside its location when the findings grouped
+         under one rule do not all say the same thing. */
+      .finding-detail {
+          font-size: 14px;
+          color: #555;
+          margin: 2px 0 6px 0;
+      }
+
       body {
           font-family: 'Helvetica', 'Arial', sans-serif;
           font-size: 16px;
@@ -230,7 +238,12 @@
                       tool: f.tool,
                       locations: []
                   };
-                  group.locations.push(f.linenum > 0 ? (f.file_url + ':' + f.linenum) : f.file_url);
+                  var where = f.linenum > 0 ? (f.file_url + ':' + f.linenum) : f.file_url;
+                  // The group prints one description. Where a finding says something
+                  // different - a branch audit names a different branch, commit and
+                  // author each time - carry its own message with its location.
+                  var own = decodeEntities(f.description);
+                  group.locations.push(own === group.description ? where : where + ' - ' + own);
                   bySeverity[f.severity][f.rule_id] = group;
               });
 
@@ -347,10 +360,21 @@
         <strong>(<%= results_matching.length %>)</strong>
       </p>
 
+      <%# Where the findings under one rule do not all say the same thing - a branch
+          audit names a different branch, commit and author each time - the single
+          heading above cannot represent them, so each one repeats its own message. %>
+      <% per_finding_detail = results_matching.map(&:description).uniq.length > 1 %>
       <ul>
         <% results_matching.each do |finding| %>
           <li>
-            <a href="<%= get_url(finding.file_url, finding.linenum) %>" target="_blank"><%= finding.file_url %></a><%= finding.linenum > 0 ? ":#{finding.linenum}" : nil %>
+            <% if finding.linkable %>
+              <a href="<%= get_url(finding.file_url, finding.linenum) %>" target="_blank"><%= finding.file_url %></a><%= finding.linenum > 0 ? ":#{finding.linenum}" : nil %>
+            <% else %>
+              <code><%= finding.file_url %></code> <em>(<%= finding.location_kind %>)</em>
+            <% end %>
+            <% if per_finding_detail %>
+              <div class="finding-detail"><%= finding.description %></div>
+            <% end %>
           </li>
         <% end %>
       </ul>

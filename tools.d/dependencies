@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'optparse'
 require 'json'
+require 'open3'
+require 'optparse'
 require 'zip'
 require 'sarif'
 
@@ -33,36 +34,50 @@ class Checker
 
   private
 
-  def get_git_files(patterns)
-    all_files = []
-
-    patterns.each do |pattern|
-      output = `git -C "#{@root_dir}" ls-files "#{pattern}" 2>/dev/null`
-      next if $?.exitstatus != 0
-
-      output.each_line do |line|
-        line = line.strip
-        all_files << line unless line.empty?
-      end
-    end
-
-    all_files
+  # Every external command goes through here. Passing argv as separate arguments means
+  # no shell is involved, so paths and search patterns containing spaces, quotes or
+  # glob characters need no escaping. Returns nil when the command fails or is absent.
+  def run(*argv)
+    out, _err, status = Open3.capture3(*argv)
+    status.success? ? out : nil
+  rescue Errno::ENOENT
+    nil
   end
 
-  def get_dll_metadata(file_path)
-    full_path = File.join(@root_dir, file_path)
-    output = `strings "#{full_path}" 2>/dev/null`
-    return '' if $?.exitstatus != 0
+  def tool_available?(name)
+    @available ||= {}
+    @available[name] = !run(name, '--version').nil? unless @available.key?(name)
+    @available[name]
+  end
 
-    metadata = []
-    output.each_line do |line|
-      if line.include?('Version') || line.include?('AssemblyTitle')
-        metadata << line.strip
-        break if metadata.size >= 2
-      end
+  def get_git_files(patterns)
+    patterns.flat_map do |pattern|
+      out = run('git', '-C', @root_dir, 'ls-files', pattern)
+      out ? out.each_line.map(&:strip).reject(&:empty?) : []
+    end
+  end
+
+  # Tags worth reporting from a PE version resource, best first.
+  DLL_METADATA_TAGS = %w[FileDescription FileVersion ProductName CompanyName].freeze
+
+  # exiftool reads the PE version resource itself. The previous approach - strings(1)
+  # filtered for lines mentioning "Version" or "AssemblyTitle" - picked up whatever
+  # string happened to come first, which on a .NET assembly is typically a *referenced*
+  # assembly such as mscorlib rather than this file.
+  def get_dll_metadata(file_path)
+    unless tool_available?('exiftool')
+      warn_once('exiftool', 'DLL version metadata will be omitted')
+      return ''
     end
 
-    metadata.join(' ')
+    out = run('exiftool', '-json', *DLL_METADATA_TAGS.map { |t| "-#{t}" },
+              File.join(@root_dir, file_path))
+    return '' unless out
+
+    tags = JSON.parse(out).first || {}
+    DLL_METADATA_TAGS.filter_map { |t| "#{t}: #{tags[t]}" if tags[t] }.take(2).join(', ')
+  rescue JSON::ParserError
+    ''
   end
 
   def get_jar_metadata(file_path)
@@ -86,71 +101,56 @@ class Checker
     ''
   end
 
-  def file_referenced_in_csproj?(basename)
-    # Search for .csproj files
-    csproj_files = get_git_files(['*.csproj'])
+  def warn_once(tool, consequence)
+    @warned ||= {}
+    return if @warned[tool]
 
-    csproj_files.each do |csproj_file|
+    @warned[tool] = true
+    warn "Warning: '#{tool}' is not installed (#{consequence}). Install it with: brew install #{tool}"
+  end
+
+  # The .csproj list is the same for every file we check, so read it once.
+  def csproj_contents
+    @csproj_contents ||= get_git_files(['*.csproj']).filter_map do |csproj_file|
       full_path = File.join(@root_dir, csproj_file)
-      next unless File.exist?(full_path)
-
-      content = File.read(full_path)
-      # Check if the file is referenced as <Reference Include="filename">
-      if content.match?(/<HintPath>.+#{Regexp.escape(basename)}/i)
-        return true
-      end
+      File.read(full_path) if File.exist?(full_path)
     end
+  end
 
-    false
+  def file_referenced_in_csproj?(basename)
+    csproj_contents.any? { |content| content.match?(/<HintPath>.+#{Regexp.escape(basename)}/i) }
   end
 
   def file_referenced?(file_path)
     basename = File.basename(file_path)
-    name_without_ext = File.basename(file_path, File.extname(file_path))
-    path_without_ext = file_path.sub(/\.[^.]+$/, '')
 
     # Search patterns to try (literal strings, not regex)
     patterns = [
       basename,
-      name_without_ext,
-      path_without_ext
-    ]
+      File.basename(file_path, File.extname(file_path)),
+      file_path.sub(/\.[^.]+$/, '')
+    ].uniq
 
-    # Check if ack is available
-    unless system('which ack > /dev/null 2>&1')
-      warn "Error: 'ack' is not installed. Install it with: brew install ack"
+    unless tool_available?('rg')
+      warn "Error: 'rg' is not installed. Install it with: brew install ripgrep"
       exit EXIT_ERROR
     end
 
     # First check if file is referenced in .csproj files as a <Reference>
-    if file_referenced_in_csproj?(basename)
-      return true
-    end
+    return true if file_referenced_in_csproj?(basename)
 
-    # Try each pattern with ack
-    patterns.each do |pattern|
-      # Use ack to search for pattern, excluding the file itself and .csproj files
-      # --literal for exact string matching, -l for files only
-      # Quote pattern properly for shell
-      escaped_pattern = pattern.gsub("'", "'\\\\''")
-      cmd = "cd '#{@root_dir}' && ack --literal -l '#{escaped_pattern}' 2>/dev/null"
-      output = `#{cmd}`
+    patterns.any? do |pattern|
+      # --fixed-strings for exact string matching, --files-with-matches for names only
+      out = run('rg', '--fixed-strings', '--files-with-matches', '--', pattern, @root_dir)
+      next false unless out
 
-      if $?.exitstatus == 0
-        # Found matches, check if any are not the file itself or .csproj files
-        output.each_line do |line|
-          match_file = line.strip
+      out.each_line.any? do |line|
+        match_file = line.chomp.delete_prefix("#{@root_dir}/")
 
-          # Skip if it's the file itself or a .csproj file
-          next if match_file == file_path
-          next if match_file.downcase.end_with?('.csproj')
-
-          return true
-        end
+        # Skip if it's the file itself or a .csproj file
+        match_file != file_path && !match_file.downcase.end_with?('.csproj')
       end
     end
-
-    false
   end
 
   public
@@ -202,7 +202,10 @@ YELLOW = "\033[1;33m"
 RESET = "\033[0m"
 
 def git_repository?(directory)
-  system("git -C '#{directory}' rev-parse --git-dir > /dev/null 2>&1")
+  _out, _err, status = Open3.capture3('git', '-C', directory, 'rev-parse', '--git-dir')
+  status.success?
+rescue Errno::ENOENT
+  false
 end
 
 def output_text(findings)
@@ -280,22 +283,27 @@ def output_sarif(findings)
     ]
   )
 
-  puts sarif.to_json
+  # sarif-ruby drops "results" entirely when the array is empty, and sarif-tools then
+  # dies with KeyError: 'results', taking down statica's whole console summary rather
+  # than just this report. Finding nothing is the normal case, so force the key back in.
+  doc = sarif.to_h
+  doc['runs'].each { |r| r['results'] ||= [] }
+  puts JSON.pretty_generate(doc)
 end
 
 def print_usage
-  puts "Usage: depspot PATH [OPTIONS]"
-  puts ""
+  puts 'Usage: depspot PATH [OPTIONS]'
+  puts ''
   puts "Find project files that aren't referenced in code"
-  puts ""
-  puts "Arguments:"
-  puts "  PATH               Directory to scan (required)"
-  puts ""
-  puts "Options:"
-  puts "  --no-sarif         Output in plain text instead of SARIF format"
-  puts "  -h, --help         Show this help message"
-  puts ""
-  puts "By default, outputs SARIF format and checks all file types (JavaScript, DLL, JAR)."
+  puts ''
+  puts 'Arguments:'
+  puts '  PATH               Directory to scan (required)'
+  puts ''
+  puts 'Options:'
+  puts '  --no-sarif         Output in plain text instead of SARIF format'
+  puts '  -h, --help         Show this help message'
+  puts ''
+  puts 'By default, outputs SARIF format and checks all file types (JavaScript, DLL, JAR).'
 end
 
 # Parse command line options
@@ -316,14 +324,14 @@ end.parse!
 options[:directory] = ARGV[0]
 
 unless options[:directory]
-  warn "Error: PATH argument is required"
-  puts ""
+  warn 'Error: PATH argument is required'
+  puts ''
   print_usage
   exit EXIT_ERROR
 end
 
 unless git_repository?(options[:directory])
-  warn "Error: Not in a git repository"
+  warn 'Error: Not in a git repository'
   exit EXIT_ERROR
 end
 
@@ -336,7 +344,7 @@ begin
   results.concat(checker.check_javascript_files)
   results.concat(checker.check_dll_files)
   results.concat(checker.check_jar_files)
-rescue => e
+rescue StandardError => e
   warn "Error checking files: #{e.message}"
   exit EXIT_ERROR
 end
@@ -347,4 +355,3 @@ if options[:sarif]
 else
   output_text(results)
 end
-

@@ -32,7 +32,7 @@ def add_result(rule_id, level, message, uri, start_line, end_line)
           },
           "region": {
             "startLine": Integer(start_line),
-            "endLine": Integer(end_line),
+            "endLine": Integer(end_line)
           }
         }
       }
@@ -57,4 +57,3 @@ end
 
 sarif_data[:runs][0][:results] = results
 puts sarif_data.to_json
-

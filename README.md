@@ -47,7 +47,9 @@ brew install semgrep \
     sarif \
     lizard-analyzer \
     checkov \
-    pmd
+    pmd \
+    ripgrep \
+    exiftool
 pip install semgrep-rules-manager
 ```
 

@@ -1,0 +1,233 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'open3'
+require 'optparse'
+require 'sarif'
+require 'set'
+require 'time'
+
+# Branch names that are expected to carry work back to the default branch. These are
+# matched as globs, case-insensitively; a pattern containing no glob character is
+# treated as a prefix, so --protected release/ keeps working. The default set covers the
+# naming conventions actually seen in the wild, because in practice nobody passes the
+# flag - statica invokes each tool as `tool <source>` and nothing else.
+PROTECTED_DEFAULT = %w[
+  release/* release-* releases/* rel/*
+  hotfix/* hotfix-* hotfixes/*
+  support/* maintenance/* maint/*
+  stable stable/* legacy/*
+].freeze
+
+opts = { dir: '.', default: nil, days: 90, protected: PROTECTED_DEFAULT, remote: 'origin', fetch: false }
+OptionParser.new do |o|
+  o.banner = 'Usage: git-branch-audit.rb [REPO_DIR] [options]'
+  o.on('--default BRANCH', 'Default branch (auto-detected from remote HEAD)') { |v| opts[:default] = v }
+  o.on('--days N', Integer, 'Age threshold in days (default 90)') { |v| opts[:days] = v }
+  o.on('--protected a,b', Array, "Protected branch globs (default #{PROTECTED_DEFAULT.join(',')})") do |v|
+    opts[:protected] = v
+  end
+  o.on('--remote NAME', 'Remote name (default origin)') { |v| opts[:remote] = v }
+  o.on('--fetch', 'Run git fetch --prune first') { opts[:fetch] = true }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+
+def protected_branch?(short, patterns)
+  patterns.any? do |pattern|
+    if pattern.match?(/[*?\[]/)
+      # No FNM_PATHNAME: "release/*" should still match a release/26.4/hotfix style name.
+      File.fnmatch?(pattern, short, File::FNM_CASEFOLD)
+    else
+      short.downcase.start_with?(pattern.downcase)
+    end
+  end
+end
+
+# ---------------------------------------------------------------- git plumbing
+def git(dir, *args)
+  out, err, st = Open3.capture3('git', '-C', dir, *args)
+  abort "error: git #{args.first} failed: #{err.strip}" unless st.success? # abort => stderr + exit 1
+  out
+end
+
+# For commands whose non-zero exit is an answer rather than a failure, such as
+# `diff --quiet` using exit 1 to mean "these differ".
+def git_succeeds?(dir, *args)
+  _out, _err, st = Open3.capture3('git', '-C', dir, *args)
+  st.success?
+end
+
+dir    = opts[:dir]
+remote = opts[:remote]
+abort "error: #{dir} is not a git repository" unless system('git', '-C', dir, 'rev-parse', '--git-dir',
+                                                            out: File::NULL, err: File::NULL)
+
+if opts[:fetch]
+  warn "fetching #{remote} --prune"
+  git(dir, 'fetch', '--prune', remote)
+end
+
+default = opts[:default] || begin
+  git(dir, 'symbolic-ref', '--short', "refs/remotes/#{remote}/HEAD").strip.sub("#{remote}/", '')
+rescue SystemExit
+  warn "warning: could not detect default branch from #{remote}/HEAD, assuming main"
+  'main'
+end
+default_ref = "#{remote}/#{default}"
+now         = Time.now.to_i
+cutoff      = now - opts[:days] * 86_400
+warn "auditing #{File.expand_path(dir)} against #{default_ref} (threshold #{opts[:days]}d)"
+
+# ---------------------------------------------------------------- collection
+Branch = Struct.new(:name, :sha, :committed, :author)
+fmt = '%(refname:short)%00%(objectname)%00%(committerdate:unix)%00%(authorname)%00%(symref)'
+branches = git(dir, 'for-each-ref', "--format=#{fmt}", "refs/remotes/#{remote}").each_line.filter_map do |l|
+  n, s, c, a, symref = l.chomp.split("\0")
+  next if n == default_ref || !symref.to_s.empty? # skip default and the origin/HEAD symref
+
+  Branch.new(n, s, c.to_i, a)
+end
+
+merged = git(dir, 'branch', '-r', '--merged', default_ref, '--format=%(refname:short)').split.to_set
+unmerged = branches.reject { |b| merged.include?(b.name) }
+warn "#{branches.size} remote branches, #{unmerged.size} not merged by ancestry"
+
+# ---------------------------------------------------------------- results
+results = []
+add = lambda do |rule, target, sha, text, props = {}|
+  kind = props[:kind] || 'branch'
+  results << Sarif::Result.new(
+    rule_id: rule, level: 'warning',
+    message: Sarif::Message.new(text: text),
+    locations: [Sarif::Location.new(
+      # fullyQualifiedName as well as name: sarif-tools (statica's console summary)
+      # only reads a logical location through fullyQualifiedName, and rejects the whole
+      # run with "No location in <rule>" when a result has neither that nor a file.
+      logical_locations: [
+        Sarif::LogicalLocation.new(name: target, fully_qualified_name: target, kind: kind)
+      ]
+    )],
+    partial_fingerprints: { 'gitObject/v1' => sha },
+    properties: props.reject { |k, _| k == :kind }
+  )
+end
+
+unmerged.each do |b|
+  short   = b.name.sub("#{remote}/", '')
+
+  # If the branch's tree matches the default branch's, there is nothing to merge back
+  # however the history got that way. This is the squash-merge case: squashing several
+  # commits produces a patch that matches none of them individually, so --cherry-pick
+  # below cannot see that the work already landed, but the content plainly has.
+  next if git_succeeds?(dir, 'diff', '--quiet', default_ref, b.name)
+
+  # Only work that originated on this branch and is not already on the default branch
+  # counts. --no-merges drops the merge commit left behind when the default branch is
+  # merged *into* a long-lived release branch: that commit is "ahead" by ancestry but
+  # carries nothing of its own, which made every back-merged release branch report as
+  # unmerged. --cherry-pick additionally drops commits whose patch already landed on the
+  # default branch, which is how a release-branch fix is usually forward-ported.
+  unique  = git(dir, 'rev-list', '--no-commit-header', '--format=%h%x00%an%x00%s',
+                '--right-only', '--cherry-pick', '--no-merges',
+                "#{default_ref}...#{b.name}")
+            .each_line.filter_map do |l|
+              sha, author, subject = l.chomp.split("\0", 3)
+              next if sha.nil? || sha.empty? || sha.start_with?('commit ')
+
+              { sha: sha, author: author, subject: subject }
+            end
+  ahead   = unique.size
+  next if ahead.zero?
+
+  # Name the commits rather than only counting them, so a reader can tell an orphaned
+  # fix from a release-only version bump without going to the shell. This goes in the
+  # message as well as in properties, because a SARIF property bag is not rendered.
+  described = unique.map { |c| "#{c[:sha]} \"#{c[:subject]}\" by #{c[:author]}" }
+  culprits  = described.first(3).join('; ')
+  culprits += "; +#{ahead - 3} more" if ahead > 3
+
+  base    = git(dir, 'merge-base', default_ref, b.name).strip
+  base_at = git(dir, 'log', '-1', '--format=%ct', base).strip.to_i
+  age_d   = (now - base_at) / 86_400
+  idle_d  = (now - b.committed) / 86_400
+
+  if protected_branch?(short, opts[:protected])
+    add.call('UNMERGED', b.name, b.sha,
+             "Protected branch '#{short}' has #{ahead} commit(s) not on #{default}; a fix may never have been merged back. Unmerged: #{culprits}.",
+             ahead: ahead, lastAuthor: b.author, idleDays: idle_d, unmergedCommits: unique)
+  end
+
+  next unless base_at < cutoff && b.committed >= cutoff
+
+  add.call('LONGLIVED', b.name, b.sha,
+           "Branch '#{short}' diverged from #{default} #{age_d} days ago and is still receiving commits (#{ahead} ahead); it is behaving like a parallel trunk. Ahead: #{culprits}.",
+           ahead: ahead, divergedDays: age_d, lastAuthor: b.author, unmergedCommits: unique)
+end
+
+# PUSHTODEFAULT: single-parent commits on the default branch's own line in the window with no
+# PR marker in the subject. --first-parent keeps the walk on that line; without it the
+# walk descends into every merged PR branch and reports its commits — which arrived via
+# a pull request — as direct pushes.
+# Heuristic only — rebase-merged PRs are indistinguishable from direct pushes without
+# the platform API.
+pr_marker = /\(#\d+\)|![0-9]+|Merged? (in|PR|pull request)/i
+git(dir, 'log', default_ref, '--first-parent', "--since=#{opts[:days]} days ago",
+    '--format=%H%x00%P%x00%an%x00%s').each_line do |l|
+  sha, parents, author, subject = l.chomp.split("\0", 4)
+  next if parents.nil? || parents.empty? || parents.include?(' ') # root or merge commit
+  next if subject.to_s.match?(pr_marker)
+
+  add.call('PUSHTODEFAULT', sha[0, 12], sha,
+           "Commit #{sha[0, 12]} by #{author} landed on #{default} without a merge or PR marker: \"#{subject}\".",
+           kind: 'commit', author: author, subject: subject)
+end
+
+# ---------------------------------------------------------------- SARIF
+rules = {
+  'UNMERGED' => ['unmerged-protected', 'Branch has commits not present on the default branch'],
+  'PUSHTODEFAULT' => ['direct-to-default', 'Commit reached the default branch without a merge or pull request'],
+  'LONGLIVED' => ['long-lived', 'Branch diverged long ago from the default branch and is still active']
+}
+repo_uri = begin
+  git(dir, 'remote', 'get-url', remote).strip
+rescue SystemExit # git() aborts on failure; fall back to the local path
+  dir
+end
+
+log = Sarif::Log.new(
+  schema_uri: 'https://json.schemastore.org/sarif-2.1.0.json',
+  version: '2.1.0',
+  runs: [Sarif::Run.new(
+    tool: Sarif::Tool.new(
+      driver: Sarif::ToolComponent.new(
+        name: 'git-branch-audit', version: '0.1.0',
+        information_uri: 'https://github.com/simpsonjulian/statica',
+        rules: rules.map do |id, (name, desc)|
+          Sarif::ReportingDescriptor.new(
+            id: id, name: name,
+            short_description: Sarif::MultiformatMessageString.new(text: desc),
+            default_configuration: Sarif::ReportingConfiguration.new(level: 'warning')
+          )
+        end
+      )
+    ),
+    invocations: [Sarif::Invocation.new(
+      execution_successful: true, end_time_utc: Time.now.utc.iso8601,
+      properties: { defaultBranch: default, thresholdDays: opts[:days] }
+    )],
+    version_control_provenance: [
+      Sarif::VersionControlDetails.new(repository_uri: repo_uri, branch: default)
+    ],
+    results: results
+  )]
+)
+
+warn "#{results.size} finding(s): #{results.group_by(&:rule_id).transform_values(&:size)}"
+
+# sarif-ruby drops "results" entirely when the array is empty, and sarif-tools then
+# dies with KeyError: 'results' - which takes down statica's whole console summary,
+# not just this report. A clean repo is the normal case, so force the key back in.
+doc = log.to_h
+doc['runs'].each { |r| r['results'] ||= [] }
+puts JSON.pretty_generate(doc)

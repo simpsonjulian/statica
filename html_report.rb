@@ -90,19 +90,37 @@ class HtmlReport
     end
   end
 
+  # Most tools report a file and a line. Some report a thing that has no file at all -
+  # git-branch-audit points at a branch or a commit - and SARIF models those as a
+  # logicalLocation with no physicalLocation. Fall back to the logical name so those
+  # findings still render, and report the kind so callers can tell a path they can link
+  # to from a name they cannot.
+  def locate(result)
+    location = result.locations&.first
+    physical = location&.physical_location
+    if physical
+      region = physical.region
+      return { label: physical.artifact_location.uri, linenum: region ? region.start_line : 0, kind: 'file' }
+    end
+
+    logical = location&.logical_locations&.first
+    { label: logical&.fully_qualified_name || logical&.name || '(no location)', linenum: 0,
+      kind: logical&.kind || 'other' }
+  end
+
   def format_result(result, report)
     rule_id = result.rule_id
-    region = result.locations[0].physical_location.region
     run = report.runs.first
     severity = find_severity(result, run)
-    region = region ? region.start_line : 0
-    file_location = result.locations[0].physical_location.artifact_location.uri
     tool = run.tool.driver.name
+    where = locate(result)
 
     OpenStruct.new({ severity: severity,
                      description: CGI.escapeHTML(result.message.text),
-                     linenum: region,
-                     file_url: file_location,
+                     linenum: where[:linenum],
+                     file_url: where[:label],
+                     location_kind: where[:kind],
+                     linkable: where[:kind] == 'file',
                      rule_id: GraphAnalyzer.clean_rule_id(rule_id),
                      tool: tool })
   end
@@ -127,6 +145,10 @@ class HtmlReport
     end
   end
 
+  # One description per rule id, used as the heading for the group. Where the findings
+  # under a rule carry different messages - a branch audit names a different branch and
+  # different commits each time - the heading can only show one of them, so the template
+  # prints each finding's own message beside its own location as well.
   def rules_and_descriptions(severity)
     @results.select { |e| e.severity == severity }.map do |result|
       [result.rule_id, result.description]

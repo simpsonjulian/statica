@@ -28,17 +28,21 @@ class GraphAnalyzer
     results.each_with_index do |result, idx|
       analysis_node = "analysis:#{result.tool}"
       finding_node = "finding:#{result.rule_id}:#{idx}"
-      file_url = self.class.normalize_file_url(result.file_url, source_root)
-      file_node = "file:#{file_url}"
+      # Most findings sit in a file, but some sit on a branch or a commit and have no
+      # file at all. Namespace the node by what it actually is so a branch never gets
+      # counted, coloured or linked as though it were a source file.
+      kind = result.location_kind || 'file'
+      label = kind == 'file' ? self.class.normalize_file_url(result.file_url, source_root) : result.file_url
+      location_node = "#{kind}:#{label}"
 
       # Add nodes with types
       add_node(analysis_node, 'analysis', result.tool)
       add_node(finding_node, 'finding', result.rule_id)
-      add_node(file_node, 'file', file_url)
+      add_node(location_node, kind, label)
 
       # Add edges with types
       add_edge(analysis_node, finding_node, 'HAS')
-      add_edge(finding_node, file_node, 'IN')
+      add_edge(finding_node, location_node, 'IN')
 
       # Store finding details
       @finding_details[finding_node] = {
@@ -47,7 +51,7 @@ class GraphAnalyzer
         description: result.description,
         linenum: result.linenum,
         tool: result.tool,
-        file: file_url
+        file: label
       }
     end
 

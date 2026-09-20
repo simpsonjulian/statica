@@ -47,6 +47,8 @@ RUN brew install \
     lizard-analyzer \
     checkov \
     pmd \
+    ripgrep \
+    exiftool \
     bearer/tap/bearer \
     ruby@3.3
 

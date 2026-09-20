@@ -23,6 +23,8 @@ brew install semgrep \
     checkov \
     pmd \
     coreutils \
+    ripgrep \
+    exiftool \
     bearer/tap/bearer
 
 pipx install sarif-tools semgrep-rules-manager
