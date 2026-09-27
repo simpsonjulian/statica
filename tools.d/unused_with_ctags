@@ -1,0 +1,218 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'digest'
+require 'open3'
+require 'optparse'
+require 'tmpdir'
+require_relative '../statica_sarif'
+
+RULE_ID = 'UNUSED_TOKEN'
+# Everything this tool reports is a lead, not a defect: occurrence counting cannot see
+# an override, an interface implementation or a reflective call, so a finding is a
+# prompt to go and look. It stays a note at every likelihood, and the ranking travels in
+# the message and the property bag instead.
+LEVEL = 'note'
+LIKELIHOODS = %w[high medium low].freeze
+
+# Passed to ctags so vendored packages and generated stubs never define tokens. This
+# does not narrow the occurrence scan - see the note on --ignore in the option below.
+DEFAULT_EXCLUDES = Statica::EXCLUDES
+
+opts = { dir: '.', likelihoods: %w[high], except_filetypes: %w[js], ignore: [], excludes: DEFAULT_EXCLUDES }
+OptionParser.new do |o|
+  o.banner = 'Usage: unused_with_ctags [SOURCE_DIR] [options]'
+  o.on('--likelihood a,b', Array, "Likelihoods to report: #{LIKELIHOODS.join(',')} (default high)") do |v|
+    opts[:likelihoods] = v.map(&:downcase)
+  end
+  o.on('--except-filetypes a,b', Array, 'Skip tokens defined in these extensions (default js)') do |v|
+    opts[:except_filetypes] = v
+  end
+  o.on('--exclude a,b', Array, "Directories ctags will not index (default #{DEFAULT_EXCLUDES.join(',')})") do |v|
+    opts[:excludes] = v
+  end
+  # Worth knowing what this does and does not do: unused's --ignore drops any token that
+  # has a definition under an ignored path, taking the whole token with it even where it
+  # is also defined in your own code. It does not narrow the occurrence scan at all, which
+  # always walks the entire tree. Off by default for that reason.
+  o.on('--ignore a,b', Array, 'Drop tokens defined under these paths (see --exclude first)') do |v|
+    opts[:ignore] = v
+  end
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+
+unknown = opts[:likelihoods] - LIKELIHOODS
+abort "error: unknown likelihood(s) #{unknown.join(', ')}; expected #{LIKELIHOODS.join(', ')}" unless unknown.empty?
+
+# ---------------------------------------------------------------- plumbing
+# Let PATH decide which binary runs and say something useful when there isn't one. Every
+# diagnostic goes to stderr, which statica captures per tool and prints to the console
+# under the scanner's name; the old wrapper exited 1 with nothing said at all, so a
+# missing binary looked identical to a crash.
+FORMULAE = { 'ctags' => 'ctags', 'unused' => 'unused-code/formulae/unused' }.freeze
+
+def capture(bin, *args, **opts)
+  Open3.capture3(bin, *args, **opts)
+rescue Errno::ENOENT
+  abort "error: #{bin} is not on PATH; install it with `brew install #{FORMULAE[bin]}`"
+end
+
+# macOS ships a BSD ctags at /usr/bin/ctags that understands neither -R nor --excmd. On a
+# machine with no Exuberant or Universal ctags installed that is what PATH finds, and the
+# run would otherwise die on "illegal option -- R" rather than on something the reader
+# can act on.
+def check_ctags
+  out, err, _status = capture('ctags', '--version')
+  return if "#{out}#{err}".match?(/Exuberant Ctags|Universal Ctags/)
+
+  abort 'error: the ctags on PATH is not Exuberant or Universal ctags; install one with `brew install ctags`'
+end
+
+# ctags writes ./tags into the tree it indexes by default, and the old wrapper cleaned
+# up with `rm -f tags` - which deleted the developer's own tags file if they had one.
+# Index into a temp dir and leave the source tree alone.
+#
+# --excmd=number records each tag's address as a line number instead of a /^regex$/
+# search pattern, which is what lets a finding carry a real SARIF region.
+def build_tags(source, tags_path, excludes)
+  argv = ['-R', '--excmd=number'] + excludes.map { |d| "--exclude=#{d}" } + ['-f', tags_path, '.']
+  _out, err, status = capture('ctags', *argv, chdir: source)
+  abort "error: ctags failed: #{err.strip}" unless status.success?
+end
+
+def unused_argv(tags_path, opts)
+  argv = ['-t', tags_path, '--format', 'json', '--no-progress', '--no-color',
+          '--likelihood', opts[:likelihoods].join(',')]
+  argv += ['--except-filetypes', opts[:except_filetypes].join(',')] unless opts[:except_filetypes].empty?
+  argv += ['--ignore', opts[:ignore].join(',')] unless opts[:ignore].empty?
+  argv
+end
+
+def run_unused(source, tags_path, opts)
+  out, err, status = capture('unused', *unused_argv(tags_path, opts), chdir: source)
+  abort "error: unused exited #{status.exitstatus}: #{err.strip}" unless status.success?
+
+  warn err.strip unless err.strip.empty?
+  JSON.parse(out)
+rescue JSON::ParserError => e
+  abort "error: could not parse unused --format json output: #{e.message}"
+end
+
+# ---------------------------------------------------------------- findings
+# ctags' own kind letters, used when unused cannot name the kind itself.
+CTAGS_KINDS = {
+  'c' => 'class', 'd' => 'macro', 'e' => 'enum constant', 'E' => 'event', 'f' => 'function',
+  'F' => 'singleton method', 'g' => 'enum', 'i' => 'interface', 'm' => 'method',
+  'n' => 'namespace', 's' => 'struct', 't' => 'typedef', 'v' => 'variable'
+}.freeze
+
+# ctags reuses a few letters across languages, so resolve those by extension: f is a
+# field in Java and C# but a function nearly everywhere else, and p is a package in
+# Java and a property in C#.
+KINDS_BY_EXTENSION = {
+  'f' => { '.java' => 'field', '.cs' => 'field' },
+  'p' => { '.java' => 'package', '.cs' => 'property' }
+}.freeze
+
+# unused reports a kind three ways: as a word when it knows the language's ctags kind
+# codes, as {"MissingLanguageToken" => [language, code]} when it knows the language but
+# not the code, and as {"Unknown" => code} when it recognises neither - which is what
+# Java and C# hit, so every finding in those trees used to read "a token".
+def describe_kind(definition)
+  phrase = kind_phrase(definition)
+  "#{phrase.match?(/\A[aeiou]/i) ? 'an' : 'a'} #{phrase}"
+end
+
+def kind_phrase(definition)
+  kind = definition['kind']
+  return kind.downcase if kind.is_a?(String)
+  return 'token' unless kind.is_a?(Hash)
+
+  language, code = kind.key?('MissingLanguageToken') ? kind['MissingLanguageToken'] : [nil, kind['Unknown']]
+  word = KINDS_BY_EXTENSION.dig(code, File.extname(definition['file_path'])) || CTAGS_KINDS[code]
+  return word if word
+  return 'token' unless code
+
+  "#{[language, "'#{code}'"].compact.join(' ')} token"
+end
+
+# nil when ctags gave a search pattern rather than a line, which happens on a build that
+# ignores --excmd=number. The report then omits the region rather than inventing one.
+def line_for(address)
+  Integer(address.to_s, exception: false)
+end
+
+def message_for(token, likelihood, entry, definition)
+  reason = entry.dig('usage_likelihood', 'reason')
+  total = (entry.dig('result', 'occurrences') || {}).values.sum
+  paths = entry.dig('result', 'token', 'defined_paths') || []
+  elsewhere = paths.size > 1 ? ", one of #{paths.size} definitions" : ''
+  "Token '#{token}' may be unused: defined as #{describe_kind(definition)} in " \
+    "#{definition['file_path']}#{elsewhere}, and appears #{total} time(s) in the codebase. " \
+    "#{likelihood.capitalize} likelihood - #{reason}."
+end
+
+def properties_for(likelihood, entry)
+  counts = entry['file_type_counts'] || {}
+  {
+    likelihood: likelihood,
+    reason: entry.dig('usage_likelihood', 'reason'),
+    occurrences: (entry.dig('result', 'occurrences') || {}).values.sum,
+    definedPaths: entry.dig('result', 'token', 'defined_paths') || [],
+    occurrencesByFileType: counts.transform_values { |c| c['occurrence_count'] }
+  }
+end
+
+# A token can be defined in more than one place - a method overridden in a subclass, a
+# constant declared twice - and each definition is separately removable, so each one
+# becomes its own result.
+def add_results(report, entry)
+  token = entry.dig('result', 'token')
+  name = token['token']
+  likelihood = entry.dig('usage_likelihood', 'status').to_s.downcase
+  (token['definitions'] || []).each { |d| add_result(report, name, likelihood, entry, d) }
+end
+
+def add_result(report, name, likelihood, entry, definition)
+  report.add(
+    RULE_ID, message_for(name, likelihood, entry, definition),
+    uri: definition['file_path'], line: line_for(definition['address']),
+    # Token plus defining file, so a finding keeps its identity across runs even as the
+    # line it sits on moves.
+    fingerprints: {
+      'unusedToken/v1' => Digest::SHA256.hexdigest("#{name}\0#{definition['file_path']}")[0, 16]
+    },
+    properties: properties_for(likelihood, entry)
+  )
+end
+
+# ---------------------------------------------------------------- SARIF
+FULL_DESCRIPTION = 'ctags lists every token the codebase defines and unused counts how often each ' \
+                   'one is mentioned. A token mentioned only where it is defined is dead code, or ' \
+                   'is reached reflectively - by metaprogramming, a serialised name or an external ' \
+                   'caller - which is worth knowing either way.'
+
+# ---------------------------------------------------------------- main
+source = opts[:dir]
+abort "error: #{source} is not a directory" unless File.directory?(source)
+check_ctags
+
+report = Statica::Report.new('unused_with_ctags')
+report.rule(RULE_ID, 'Token is defined but appears to be unused',
+            level: LEVEL, name: 'unused-token', full: FULL_DESCRIPTION)
+report.invocation(likelihoods: opts[:likelihoods], exceptFiletypes: opts[:except_filetypes],
+                  excludedDirectories: opts[:excludes])
+
+Dir.mktmpdir('statica-unused') do |tmpdir|
+  tags_path = File.join(tmpdir, 'tags')
+  warn "indexing #{File.expand_path(source)} with ctags"
+  build_tags(source, tags_path, opts[:excludes])
+  if File.size?(tags_path)
+    run_unused(source, tags_path, opts).each { |entry| add_results(report, entry) }
+  else
+    warn 'warning: ctags indexed no tags; reporting no findings'
+  end
+end
+
+warn "#{report.results.size} finding(s) at likelihood #{opts[:likelihoods].join(', ')}"
+report.emit

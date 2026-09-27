@@ -1,0 +1,176 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Reports assembly references wired up by file path that should be package references.
+# Most of this is decided from the path alone; nuget.org is consulted only for a DLL
+# committed to the repository, where the path cannot say whether a package exists.
+
+require 'net/http'
+require 'optparse'
+require 'rexml/document'
+require_relative '../statica_sarif'
+
+PROJECTS = /\.(?:cs|vb|fs)proj\z/i
+
+report = Statica::Report.new('nuget-hintpath')
+report.rule('HINTPATH_MACHINE_SPECIFIC', 'Reference resolves outside the repository', level: 'warning')
+report.rule('HINTPATH_RESTORABLE', 'Reference could be a PackageReference')
+report.rule('HINTPATH_VERSION_MISMATCH', 'Reference version disagrees with its HintPath')
+report.rule('LEGACY_PACKAGE_FORMAT', 'Project uses packages.config rather than PackageReference')
+
+opts = { dir: '.', nuget: true }
+OptionParser.new do |o|
+  o.on('--[no-]nuget', 'Ask nuget.org about in-repo DLLs (default on)') { |v| opts[:nuget] = v }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+abort "error: #{opts[:dir]} is not a directory" unless File.directory?(opts[:dir])
+ROOT = File.expand_path(opts[:dir])
+
+@nuget_cache = {}
+@nuget_up = opts[:nuget]
+
+def http_get(uri)
+  Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 10) do |http|
+    http.get(uri.request_uri)
+  end
+end
+
+# nuget.org's flat container: 200 lists every published version, 404 means no such id.
+def nuget_versions(id)
+  key = id.to_s.downcase
+  return nil if !@nuget_up || key.empty?
+  return @nuget_cache[key] if @nuget_cache.key?(key)
+
+  res = http_get(URI("https://api.nuget.org/v3-flatcontainer/#{key}/index.json"))
+  @nuget_cache[key] = res.is_a?(Net::HTTPSuccess) ? JSON.parse(res.body)['versions'] : nil
+rescue StandardError => e
+  warn "warning: nuget.org unreachable (#{e.class}); skipping package lookups"
+  @nuget_up = false
+  nil
+end
+
+# Reference/@Include is an assembly identity: "Name, Version=1.2.3.0, Culture=neutral, ...".
+def identity(include)
+  name, *rest = include.to_s.split(',').map(&:strip)
+  version = rest.filter_map { |p| p.split('=', 2) }.find { |k, _| k.casecmp?('Version') }&.last
+  [name, version]
+end
+
+# A NuGet v2 restore folder: packages/Newtonsoft.Json.13.0.3/lib/net45/Newtonsoft.Json.dll
+def package_from_path(hint)
+  m = hint.match(%r{(?:\A|/)packages/([^/]+?)\.(\d+(?:\.\d+)+[^/]*)/}i)
+  m ? [m[1], m[2]] : nil
+end
+
+def classify(hint, csproj_dir)
+  slashed = hint.tr('\\', '/')
+  return :machine if slashed.match?(%r{\A[a-zA-Z]:/}) || slashed.start_with?('//')
+  return :machine unless File.expand_path(slashed, csproj_dir).start_with?("#{ROOT}/")
+  return :restorable if package_from_path(slashed)
+
+  :in_repo
+end
+
+# REXML carries no line numbers, so find the element's own text in the file.
+def line_of(lines, needle)
+  (lines.index { |l| l.include?(needle) } || 0) + 1
+end
+
+def report_machine(report, ref)
+  report.add('HINTPATH_MACHINE_SPECIFIC',
+             "#{ref[:name]} is referenced at #{ref[:hint]}, which resolves outside the " \
+             'repository. The build depends on the layout of one machine.',
+             uri: ref[:rel], line: ref[:line],
+             properties: { package: ref[:name], hintPath: ref[:hint] })
+end
+
+def report_restorable(report, ref)
+  report.add('HINTPATH_RESTORABLE',
+             "#{ref[:id]} #{ref[:version]} is referenced through #{ref[:hint]}, a NuGet restore " \
+             "folder. Replace the <Reference> with <PackageReference Include=\"#{ref[:id]}\" " \
+             "Version=\"#{ref[:version]}\" />.",
+             uri: ref[:rel], line: ref[:line],
+             properties: { package: ref[:id], version: ref[:version], hintPath: ref[:hint] })
+end
+
+def report_in_repo(report, ref)
+  versions = nuget_versions(ref[:name])
+  return if versions.nil? || versions.empty?
+
+  report.add('HINTPATH_RESTORABLE',
+             "#{ref[:name]} is committed to the repository at #{ref[:hint]}, but nuget.org " \
+             "publishes it (latest #{versions.last}). A PackageReference would take the binary " \
+             'out of source control.',
+             uri: ref[:rel], line: ref[:line],
+             properties: { package: ref[:name], hintPath: ref[:hint], latestOnNuget: versions.last })
+end
+
+# Only the major version is comparable: the convention is to pin an assembly version to
+# major.0.0.0 while the package version carries the full semver, so Newtonsoft.Json
+# 13.0.3 legitimately ships assembly 13.0.0.0.
+def report_mismatch(report, ref, include_version)
+  return unless include_version && ref[:version]
+  return if include_version.split('.').first == ref[:version].split('.').first
+
+  report.add('HINTPATH_VERSION_MISMATCH',
+             "#{ref[:name]} declares Version=#{include_version} but its HintPath resolves to " \
+             "#{ref[:version]}. One of the two is stale.",
+             uri: ref[:rel], line: ref[:line],
+             properties: { package: ref[:name], includeVersion: include_version,
+                           hintPathVersion: ref[:version] })
+end
+
+def packages_config_finding(report, path, rel)
+  config = File.join(File.dirname(path), 'packages.config')
+  return unless File.exist?(config)
+
+  count = File.read(config).scan(/<package\s/i).size
+  report.add('LEGACY_PACKAGE_FORMAT',
+             "#{File.basename(path)} restores #{count} package(s) through packages.config. " \
+             'Migrate to PackageReference so restore is driven by the project file.',
+             uri: rel, line: 1, properties: { packageCount: count })
+end
+
+def reference_for(node, hint, ctx)
+  name, include_version = identity(node.parent.attributes['Include'])
+  id, version = package_from_path(hint.tr('\\', '/'))
+  [{ name: name, id: id, version: version, hint: hint, rel: ctx[:rel],
+     line: line_of(ctx[:lines], hint) }, include_version]
+end
+
+def reference_findings(report, node, ctx)
+  hint = node.text.to_s.strip
+  return if hint.empty?
+
+  ref, include_version = reference_for(node, hint, ctx)
+  case classify(hint, ctx[:dir])
+  when :machine then report_machine(report, ref)
+  when :restorable then report_restorable(report, ref)
+  when :in_repo then report_in_repo(report, ref)
+  end
+  report_mismatch(report, ref, include_version)
+end
+
+def parse_project(path, rel)
+  REXML::Document.new(File.read(path))
+rescue REXML::ParseException => e
+  warn "warning: #{rel} is not parseable XML: #{e.message.lines.first&.strip}"
+  nil
+end
+
+projects = []
+Statica.each_file(opts[:dir]) { |path, _rel| projects << path if path.match?(PROJECTS) }
+
+projects.each do |path|
+  rel = path.delete_prefix("#{opts[:dir]}/").delete_prefix('./')
+  doc = parse_project(path, rel)
+  next unless doc
+
+  packages_config_finding(report, path, rel)
+  ctx = { rel: rel, dir: File.dirname(File.expand_path(path)),
+          lines: File.readlines(path, chomp: true) }
+  REXML::XPath.each(doc, '//Reference/HintPath') { |node| reference_findings(report, node, ctx) }
+end
+
+warn "#{projects.size} project file(s), #{report.results.size} finding(s)"
+report.emit

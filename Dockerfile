@@ -49,8 +49,12 @@ RUN brew install \
     pmd \
     ripgrep \
     exiftool \
+    ctags \
     bearer/tap/bearer \
     ruby@3.3
+
+# unused has no bottle, so this builds from source via cargo
+RUN brew install unused-code/formulae/unused
 
 # Link ruby@3.3 to make it the default
 RUN brew link ruby@3.3

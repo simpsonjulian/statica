@@ -5,6 +5,9 @@ which retire > /dev/null || exit 1
 
 source=$1
 
+# Resolve csv2sarif next to this script. Prepending the installed libexec to PATH, as
+# this did, shadowed the working tree with whatever was last installed.
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 tmpdir=$(mktemp -d)
 
 retire --exitwith 0 --outputformat json --outputpath "${tmpdir}/report.json" --path "${source}" 1>&2
@@ -12,8 +15,7 @@ retire --exitwith 0 --outputformat json --outputpath "${tmpdir}/report.json" --p
 # Iterate over files and their vulnerabilities to produce a CSV
 jq --raw-output '.data[] | .file as $file | .results[] | .vulnerabilities[] | ["vulnerable-js-file", .severity, .identifiers.CVE[0] + " -" + .identifiers.summary, $file, 0, 0] | @csv' < "${tmpdir}/report.json" > "${tmpdir}/findings.csv"
 
-brew_prefix=$(brew --prefix)
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "retirejs" "$(retire --version)" "${tmpdir}/findings.csv"
+"${here}/../csv2sarif" "retirejs" "$(retire --version)" "${tmpdir}/findings.csv"
 
 # Clean up
 rm -rf "${tmpdir}"

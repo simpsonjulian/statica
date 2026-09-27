@@ -1,30 +1,56 @@
-#!/bin/bash
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-set -euo pipefail
-which git > /dev/null || exit 1
+# Files committed to most often over the last year. Repeated churn in one file often
+# marks a design problem: a god object, or a seam where unrelated concerns collide.
 
-source=$1
-tmpdir=$(mktemp -d)
-brew_prefix=$(brew --prefix)
+require 'open3'
+require 'optparse'
+require_relative '../statica_sarif'
 
-OUTPUT="${tmpdir}/churned"
-CSV="${tmpdir}/findings.csv"
-TOP_N_CHURNED_FILES=10
-touch "$CSV"
+RULE = 'top-file-churns'
 
-git -C "${source}" log --format=format: --name-only --since=12.month \
- | grep -Ev '^$' \
- | sort \
- | uniq -c \
- | sort -nr \
- | awk -v n=${TOP_N_CHURNED_FILES} 'NR <= n {print $2, $1}' > "${OUTPUT}"
+opts = { dir: '.', top: 10, since: '12.month' }
+OptionParser.new do |o|
+  o.on('--top N', Integer, 'How many files to report (default 10)') { |v| opts[:top] = v }
+  o.on('--since WHEN', 'Any git date expression (default 12.month)') { |v| opts[:since] = v }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+abort "error: #{opts[:dir]} is not a directory" unless File.directory?(opts[:dir])
 
+def git(dir, *args)
+  out, err, status = Open3.capture3('git', '-C', dir, *args)
+  abort "error: git #{args.first} failed: #{err.strip}" unless status.success?
 
-while read -r filename _commits; do
-  printf "%s,%s,%s,%s,%s,%s\n" "top-file-churns" "note" "File has been committed to frequently. This may indicate design issues." "${filename}" 0 0 >> "$CSV"
-done < "${OUTPUT}"
+  out
+rescue Errno::ENOENT
+  abort 'error: git is not on PATH; install it with `brew install git`'
+end
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "Statica Churn" "$(git --version)" "$CSV"
+touched = git(opts[:dir], 'log', '--format=format:', '--name-only', "--since=#{opts[:since]}")
+counts = Hash.new(0)
+touched.each_line(chomp: true) do |path|
+  next if path.empty?
+  next if path.split('/').any? { |part| Statica::EXCLUDES.include?(part) }
 
-# clean up
-rm -rf "${tmpdir}"
+  counts[path] += 1
+end
+
+# A file that has since been deleted cannot be acted on, and its SARIF location would
+# point at nothing.
+ranked = counts.select { |path, _| File.exist?(File.join(opts[:dir], path)) }
+               .sort_by { |path, count| [-count, path] }
+               .first(opts[:top])
+
+report = Statica::Report.new('churn', version: git(opts[:dir], '--version').strip)
+report.rule(RULE, 'File is committed to unusually often')
+report.invocation(since: opts[:since], top: opts[:top])
+ranked.each do |path, count|
+  report.add(RULE,
+             "#{path} has been committed to #{count} times since #{opts[:since]}. Repeated " \
+             'churn in one file often marks a design problem.',
+             uri: path, properties: { commits: count })
+end
+
+warn "#{counts.size} file(s) touched since #{opts[:since]}, reporting top #{ranked.size}"
+report.emit

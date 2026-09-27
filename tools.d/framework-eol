@@ -1,0 +1,138 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Reports target frameworks that are out of support, or nearly so, plus application
+# stacks that are obsolete outright. Support dates come from endoflife.date rather than
+# a table baked in here, because that table rots.
+
+require 'date'
+require 'net/http'
+require 'optparse'
+require_relative '../statica_sarif'
+
+report = Statica::Report.new('framework-eol')
+report.rule('FRAMEWORK_EOL', 'Target framework is out of support', level: 'warning')
+report.rule('FRAMEWORK_EOL_SOON', 'Target framework goes out of support soon')
+report.rule('LEGACY_STACK', 'Application stack is obsolete')
+
+# Extension => what using it implies. One finding per stack, not per file.
+LEGACY = {
+  '.aspx' => 'ASP.NET Web Forms', '.ascx' => 'ASP.NET Web Forms',
+  '.asmx' => 'ASP.NET Web Services (ASMX)', '.vbhtml' => 'ASP.NET MVC with VBHTML',
+  '.jsp' => 'JavaServer Pages', '.jspx' => 'JavaServer Pages', '.jspf' => 'JavaServer Pages',
+  '.cfm' => 'ColdFusion', '.cfc' => 'ColdFusion'
+}.freeze
+
+opts = { dir: '.', soon: 180 }
+OptionParser.new do |o|
+  o.on('--soon N', Integer, 'Days ahead to warn about (default 180)') { |v| opts[:soon] = v }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+abort "error: #{opts[:dir]} is not a directory" unless File.directory?(opts[:dir])
+
+def get(uri)
+  res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 10) do |http|
+    http.get(uri.request_uri)
+  end
+  res.is_a?(Net::HTTPSuccess) ? res.body : nil
+end
+
+def fetch_cycles(product)
+  body = get(URI("https://endoflife.date/api/#{product}.json"))
+  return {} unless body
+
+  JSON.parse(body).to_h { |c| [c['cycle'], c['eol'].is_a?(String) ? Date.parse(c['eol']) : nil] }
+rescue StandardError => e
+  warn "warning: could not reach endoflife.date for #{product}: #{e.class}"
+  {}
+end
+
+# A target framework moniker, or an old-style version, mapped onto an endoflife.date
+# product and cycle. netstandard is an API surface rather than a runtime, so it has none.
+def product_cycle(raw)
+  tfm = raw.strip.downcase
+  if (m = tfm.match(/\Anet(\d)(\d)(\d)?\z/))
+    ['dotnetfx', m.captures.compact.join('.')]
+  elsif (m = tfm.match(/\Av?(\d+\.\d+(?:\.\d+)?)\z/))
+    ['dotnetfx', m[1]]
+  elsif (m = tfm.match(/\Anet(\d+)\.\d+/) || tfm.match(/\Anetcoreapp(\d+\.\d+)\z/))
+    ['dotnet', m[1]]
+  elsif (m = tfm.match(/\A(?:1\.)?(\d+)\z/))
+    ['eclipse-temurin', m[1]]
+  end
+end
+
+XML_COMMENT = /<!--.*?-->/m
+GRADLE_COMMENT = %r{/\*.*?\*/|//[^\n]*}m
+
+# Every place a version can be declared, as extension/filename => patterns to scan for,
+# plus the comment syntax to ignore (web.config templates ship with commented-out examples).
+DECLARATIONS = [
+  [/\.(cs|vb|fs)proj\z/, [/<TargetFrameworkVersions?>([^<]+)</i, /<TargetFrameworks?>([^<]+)</i], XML_COMMENT],
+  [/web\.config\z/i, [/targetFramework\s*=\s*"([^"]+)"/i], XML_COMMENT],
+  [/global\.json\z/i, [/"version"\s*:\s*"(\d+)\./i], nil],
+  [/pom\.xml\z/i, [/<(?:maven\.compiler\.(?:source|target)|java\.version)>([^<]+)</i], XML_COMMENT],
+  [/build\.gradle(\.kts)?\z/i,
+   [/(?:source|target)Compatibility\s*=?\s*['"]?(?:JavaVersion\.VERSION_)?([\d._]+)/i], GRADLE_COMMENT]
+].freeze
+
+# The file's lines with comments blanked out, keeping line numbers intact.
+def uncommented_lines(path, comment)
+  text = File.read(path)
+  text = text.gsub(comment) { |c| "\n" * c.count("\n") } if comment
+  text.lines(chomp: true)
+end
+
+declared = [] # [rel, lineno, moniker]
+legacy = Hash.new { |h, k| h[k] = [] }
+Statica.each_file(opts[:dir]) do |path, rel|
+  ext = File.extname(rel).downcase
+  legacy[LEGACY[ext]] << rel if LEGACY.key?(ext)
+  _, patterns, comment = DECLARATIONS.find { |m, _| rel.match?(m) }
+  next unless patterns
+
+  uncommented_lines(path, comment).each_with_index do |line, i|
+    patterns.each do |re|
+      next unless (m = line.match(re))
+
+      # <TargetFrameworks> (plural) is a semicolon-delimited list.
+      m[1].split(';').each { |tfm| declared << [rel, i + 1, tfm.strip] unless tfm.strip.empty? }
+    end
+  end
+rescue ArgumentError, Errno::EACCES
+  next
+end
+
+products = declared.filter_map { |_, _, tfm| product_cycle(tfm)&.first }.uniq
+catalog = products.to_h { |p| [p, fetch_cycles(p)] }
+
+today = Date.today
+declared.uniq.each do |rel, line, tfm|
+  product, cycle = product_cycle(tfm)
+  next unless product
+
+  eol = catalog.dig(product, cycle)
+  next if eol.nil?
+
+  days = (eol - today).to_i
+  props = { framework: tfm, cycle: cycle, product: product, endOfSupport: eol.to_s }
+  if days.negative?
+    report.add('FRAMEWORK_EOL',
+               "#{tfm} left support on #{eol} (#{-days} days ago); it no longer receives security " \
+               'fixes. Retarget to a supported version.', uri: rel, line: line, properties: props)
+  elsif days <= opts[:soon]
+    report.add('FRAMEWORK_EOL_SOON',
+               "#{tfm} leaves support on #{eol}, in #{days} days. Plan the upgrade now.",
+               uri: rel, line: line, properties: props)
+  end
+end
+
+legacy.each do |stack, files|
+  report.add('LEGACY_STACK',
+             "#{stack} is in use across #{files.size} file(s), for example #{files.first}. The " \
+             'stack is obsolete and constrains which runtimes the application can target.',
+             uri: files.first, line: 1, properties: { stack: stack, fileCount: files.size })
+end
+
+warn "#{declared.uniq.size} framework declaration(s), #{report.results.size} finding(s)"
+report.emit

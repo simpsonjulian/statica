@@ -1,0 +1,125 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Reports runs of commented-out code. The distinction that matters is prose versus code:
+# a licence header or a paragraph of explanation is not a finding, a disabled function is.
+
+require 'optparse'
+require_relative '../statica_sarif'
+
+RULE = 'COMMENTED_OUT_CODE'
+report = Statica::Report.new('commented-code')
+report.rule(RULE, 'A run of code has been commented out rather than deleted')
+
+SLASH = %w[.c .h .cc .cpp .hpp .cs .java .js .jsx .ts .tsx .go .swift .kt .kts .scala .php .rs .m .mm].freeze
+HASH = %w[.rb .py .sh .bash .zsh .pl .pm .tf .r .ex .exs].freeze
+DASH = %w[.sql .lua .hs .adb .ads].freeze
+LINE_COMMENT = SLASH.to_h { |e| [e, '//'] }
+                    .merge(HASH.to_h { |e| [e, '#'] })
+                    .merge(DASH.to_h { |e| [e, '--'] })
+                    .freeze
+# Only the slash languages get /* */; Ruby's =begin/=end is handled as its own pair.
+BLOCK = { '/*' => '*/', '=begin' => '=end' }.freeze
+
+CODEISH = [
+  /[;{}]\s*\z/, /\)\s*\z/, /\w+\s*\([^)]*\)/, /[^=!<>]=[^=]/,
+  /\A(?:if|else|for|while|switch|case|try|catch|finally|return|throw|new|public|private|protected|
+      internal|static|void|var|let|const|def|end|function|func|class|struct|import|using|namespace|
+      package|foreach|do|elsif|except)\b/x
+].freeze
+MARKER = /\A(?:TODO|FIXME|NOTE|HACK|XXX|WARNING|NB)\b/i
+LICENCE = /copyright|spdx|licen[sc]e|all rights reserved|permission is hereby granted/i
+
+opts = { dir: '.', min: 10, ratio: 0.6 }
+OptionParser.new do |o|
+  o.on('--min N', Integer, 'Minimum consecutive comment lines (default 10)') { |v| opts[:min] = v }
+  o.on('--ratio F', Float, 'Fraction that must look like code (default 0.6)') { |v| opts[:ratio] = v }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+abort "error: #{opts[:dir]} is not a directory" unless File.directory?(opts[:dir])
+
+def codeish?(body)
+  return false if body.empty? || body.match?(MARKER)
+
+  CODEISH.any? { |re| body.match?(re) }
+end
+
+# Returns the comment body for a line, :blank for whitespace, or nil for anything else.
+def classify(line, marker, state)
+  stripped = line.strip
+  return :blank if stripped.empty?
+  return close_block(stripped, state) if state[:in_block]
+
+  open_block(stripped, state) ||
+    (stripped.start_with?(marker) ? stripped.delete_prefix(marker).strip : nil)
+end
+
+def close_block(stripped, state)
+  close = state[:in_block]
+  return stripped unless stripped.include?(close)
+
+  state[:in_block] = nil
+  stripped.sub(/.*#{Regexp.escape(close)}/, '').strip
+end
+
+def open_block(stripped, state)
+  open, close = BLOCK.find { |o, _| stripped.start_with?(o) }
+  return nil unless open
+
+  body = stripped.delete_prefix(open)
+  state[:in_block] = close unless open != '=begin' && body.include?(close)
+  body.sub(/#{Regexp.escape(close)}.*/, '').strip
+end
+
+def binary?(path)
+  File.open(path, 'rb') { |f| f.read(1024).to_s.include?("\0") }
+rescue StandardError
+  true
+end
+
+# Comment and blank lines with their numbers; code lines are dropped, so a gap in the
+# numbering marks real code. Blanks are kept so that a blank line inside a run does not
+# split it, which is what stops a gap of empty lines being read as commented-out code.
+def marked_lines(path, marker)
+  state = { in_block: nil }
+  File.foreach(path).with_index(1).filter_map do |line, no|
+    body = classify(line, marker, state)
+    [no, body] if body
+  end
+rescue ArgumentError, Errno::EACCES, Errno::EISDIR
+  []
+end
+
+def blocks_in(path, marker)
+  marked_lines(path, marker)
+    .chunk_while { |(a, _), (b, _)| b == a + 1 }
+    .map { |chunk| chunk.reject { |(_, body)| body == :blank } }
+    .reject(&:empty?)
+    .map { |chunk| { start: chunk.first[0], last: chunk.last[0], bodies: chunk.map(&:last) } }
+end
+
+scanned = 0
+Statica.each_file(opts[:dir]) do |path, rel|
+  marker = LINE_COMMENT[File.extname(path).downcase]
+  next if marker.nil? || binary?(path)
+
+  scanned += 1
+  blocks_in(path, marker).each do |run|
+    lines = run[:bodies].size
+    next if lines < opts[:min]
+
+    code = run[:bodies].count { |b| codeish?(b) }
+    next if code < lines * opts[:ratio]
+    # A licence header near the top of a file is boilerplate, not disabled code.
+    next if run[:start] <= 20 && run[:bodies].join(' ').match?(LICENCE)
+
+    report.add(RULE,
+               "#{lines} consecutive commented lines, #{code} of which look like code, at " \
+               "#{rel}:#{run[:start]}-#{run[:last]}. Delete it; version control remembers.",
+               uri: rel, line: run[:start], end_line: run[:last],
+               properties: { commentLines: lines, codeLines: code })
+  end
+end
+
+warn "#{scanned} file(s) scanned, #{report.results.size} finding(s)"
+report.emit

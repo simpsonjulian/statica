@@ -7,7 +7,9 @@ source=$1
 set -eo pipefail
 
 pmd_version=$(pmd --version | grep PMD | awk '{print $2}')
-brew_prefix=$(brew --prefix)
+# Resolve csv2sarif next to this script. Prepending the installed libexec to PATH, as
+# this did, shadowed the working tree with whatever was last installed.
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 tmpdir=$(mktemp -d)
 output_csv="${tmpdir}/output.csv"
 findings_csv="${tmpdir}/findings.csv"
@@ -42,6 +44,6 @@ awk -F ',' '{print $1, $4, $5}' "${output_csv}" | while read -r lines start_line
     printf "duplication,note,code duplication found in source files,%s,%s,%s\n" "${file}" "${start_line}" "${end_line}"  >> "${findings_csv}"
 done
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "pmd-cp" "${pmd_version}" "${findings_csv}"
+"${here}/../csv2sarif" "pmd-cpd" "${pmd_version}" "${findings_csv}"
 
 rm -rf "${tmpdir}"

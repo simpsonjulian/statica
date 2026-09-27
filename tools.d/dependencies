@@ -5,7 +5,7 @@ require 'json'
 require 'open3'
 require 'optparse'
 require 'zip'
-require 'sarif'
+require_relative '../statica_sarif'
 
 EXIT_SUCCESS = 0
 EXIT_ISSUES = 1
@@ -240,56 +240,22 @@ RULES = {
   FileType::JAR => ['unreferenced-jar', 'JAR file not referenced in codebase']
 }.freeze
 
-def sarif_rules
-  RULES.map do |_type, (id, description)|
-    Sarif::ReportingDescriptor.new(
-      id: id,
-      short_description: Sarif::MultiformatMessageString.new(text: description),
-      help_uri: DEPSPOT_URI
-    )
-  end
-end
-
-def sarif_result(finding)
-  rule_id, = RULES[finding.file_type]
+def finding_message(finding)
   message = "#{finding.file_type} file not referenced in codebase"
-  message += " (#{finding.metadata})" if finding.metadata && !finding.metadata.empty?
+  return message if finding.metadata.nil? || finding.metadata.empty?
 
-  Sarif::Result.new(
-    rule_id: rule_id,
-    level: 'warning',
-    message: Sarif::Message.new(text: message),
-    locations: [
-      Sarif::Location.new(
-        physical_location: Sarif::PhysicalLocation.new(
-          artifact_location: Sarif::ArtifactLocation.new(uri: finding.file_path)
-        )
-      )
-    ]
-  )
+  "#{message} (#{finding.metadata})"
 end
 
 def output_sarif(findings)
-  sarif = Sarif::Log.new(
-    version: '2.1.0',
-    runs: [
-      Sarif::Run.new(
-        tool: Sarif::Tool.new(
-          driver: Sarif::ToolComponent.new(
-            name: 'depspot', information_uri: DEPSPOT_URI, version: '1.0.0', rules: sarif_rules
-          )
-        ),
-        results: findings.map { |f| sarif_result(f) }
-      )
-    ]
-  )
-
-  # sarif-ruby drops "results" entirely when the array is empty, and sarif-tools then
-  # dies with KeyError: 'results', taking down statica's whole console summary rather
-  # than just this report. Finding nothing is the normal case, so force the key back in.
-  doc = sarif.to_h
-  doc['runs'].each { |r| r['results'] ||= [] }
-  puts JSON.pretty_generate(doc)
+  report = Statica::Report.new('depspot', version: '1.0.0')
+  RULES.each_value do |id, description|
+    report.rule(id, description, level: 'warning', help_uri: DEPSPOT_URI)
+  end
+  findings.each do |finding|
+    report.add(RULES[finding.file_type].first, finding_message(finding), uri: finding.file_path)
+  end
+  report.emit
 end
 
 def print_usage

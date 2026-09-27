@@ -49,9 +49,16 @@ brew install semgrep \
     checkov \
     pmd \
     ripgrep \
-    exiftool
+    exiftool \
+    ctags
+brew install unused-code/formulae/unused
 pip install semgrep-rules-manager
 ```
+
+`ctags` and `unused` are used by the `unused_with_ctags` scanner. The `framework-eol`,
+`commented-code` and `nuget-hintpath` scanners need no extra tools; `framework-eol` and
+`nuget-hintpath` read endoflife.date and nuget.org over HTTPS and degrade to fewer
+findings when offline.
 
 You'll also want Ruby 3.0.0 or later installed to do the HTML.
 

@@ -1,31 +1,64 @@
-#!/bin/bash
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-set -euo pipefail
-which lizard > /dev/null || exit 1
+# Functions above lizard's cyclomatic complexity warning threshold, which defaults to 15.
 
-source=$1
-tmpdir=$(mktemp -d)
-brew_prefix=$(brew --prefix)
+require 'open3'
+require 'optparse'
+require_relative '../statica_sarif'
 
-choose() {
-  local input=$1
-  local column=$2
-  echo "${input}" | cut -d ':' -f"${column}"
-}
+RULE = 'complexity-above-15'
 
-# run the scan, warnings only, ignore non-zero return code
-# timeout after 5 minutes (300 seconds) with non-zero exit code
-result=${tmpdir}/lizard.out
-timeout 300 lizard -w -o "${result}" "${source}" || true
+# lizard -w prints one warning per line, in clang's diagnostic format:
+#   ./app/thing.rb:32: warning: some_method has 5 NLOC, 3 CCN, 51 token, 2 PARAM, 6 length, 0 ND
+WARNING = /\A(?<file>.+?):(?<line>\d+):\s*warning:\s*(?<name>.+?) has
+           \s+(?<nloc>\d+)\s+NLOC,\s+(?<ccn>\d+)\s+CCN/x
 
-[ -s "$result" ] || exit 1
+opts = { dir: '.', timeout: 300 }
+OptionParser.new do |o|
+  o.on('--timeout N', Integer, 'Seconds to allow lizard (default 300)') { |v| opts[:timeout] = v }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+abort "error: #{opts[:dir]} is not a directory" unless File.directory?(opts[:dir])
 
-awk -F':' '{print $2,$3, $1}' "${result}" | while read -r startline severity filename ; do
-  printf "%s,%s,%s,%s,%s,%s\n" "complexity-above-15" "${severity}" "Function has a cyclomatic complexity value higher than 15" \
-  "${filename}"  "${startline}"  0 >> "${tmpdir}"/findings.csv
-done
+# lizard has no time limit of its own and can run for a very long time on a large tree,
+# so cap it here and keep whatever it managed to print rather than losing the run.
+def capture_or_kill(out, wait, seconds)
+  output = +''
+  reader = Thread.new { output = out.read }
+  unless wait.join(seconds)
+    warn "warning: lizard did not finish within #{seconds}s; reporting what it produced"
+    Process.kill('TERM', wait.pid)
+  end
+  reader.join(5)
+  output
+end
 
-PATH="${brew_prefix}/opt/statica/libexec:.:$PATH" csv2sarif "lizard" "$(lizard --version)" "${tmpdir}/findings.csv"
+def run_lizard(dir, seconds)
+  Open3.popen2e('lizard', '-w', '.', chdir: dir) do |stdin, out, wait|
+    stdin.close
+    capture_or_kill(out, wait, seconds)
+  end
+rescue Errno::ENOENT
+  abort 'error: lizard is not on PATH; install it with `brew install lizard-analyzer`'
+end
 
-# clean up
-rm -rf "${tmpdir}"
+report = Statica::Report.new('lizard')
+report.rule(RULE, 'Function exceeds the cyclomatic complexity threshold')
+
+count = 0
+run_lizard(opts[:dir], opts[:timeout]).each_line do |line|
+  match = WARNING.match(line)
+  next unless match
+
+  count += 1
+  name = match[:name].strip
+  report.add(RULE,
+             "#{name} has a cyclomatic complexity of #{match[:ccn]} over " \
+             "#{match[:nloc]} lines. Complex functions are hard to test and hard to review.",
+             uri: match[:file].delete_prefix('./'), line: match[:line].to_i,
+             properties: { function: name, ccn: match[:ccn].to_i, nloc: match[:nloc].to_i })
+end
+
+warn "#{count} function(s) over the threshold"
+report.emit

@@ -23,14 +23,18 @@ Gem::Specification.new do |spec|
     'statica',
     'csv2sarif',
     'graph_analyzer.rb',
+    'statica_sarif.rb',
     'html_report.rb',
     'template.erb',
     'tools.d/*'
   ]
 
-  # stdlib gems no longer shipped as default gems (csv: Ruby 3.4, ostruct: Ruby 4.0)
+  # stdlib gems no longer shipped as default gems (csv: Ruby 3.4, ostruct: Ruby 4.0).
+  # rexml is bundled rather than default too; nuget-hintpath parses .csproj with it and
+  # today only gets it transitively through rgl.
   spec.add_dependency 'csv', '~> 3.3'
   spec.add_dependency 'ostruct', '~> 0.6'
+  spec.add_dependency 'rexml', '~> 3.2'
 
   spec.bindir        = '.'
   spec.executables   = %w[statica csv2sarif]

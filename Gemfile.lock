@@ -4,6 +4,7 @@ PATH
     statica (1.2.8)
       csv (~> 3.3)
       ostruct (~> 0.6)
+      rexml (~> 3.2)
 
 GEM
   remote: https://rubygems.org/

@@ -35,3 +35,9 @@ Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
     - '*.gemspec'
+
+# This cop counts keyword arguments, which turns a readable builder call into an
+# offence. Keywords are named at the call site, so they do not carry the cost of a long
+# positional list that the cop exists to catch.
+Metrics/ParameterLists:
+  CountKeywordArgs: false
