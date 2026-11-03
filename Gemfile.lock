@@ -5,6 +5,9 @@ PATH
       csv (~> 3.3)
       ostruct (~> 0.6)
       rexml (~> 3.2)
+      rgl (~> 0.6)
+      rubyzip (~> 2.3)
+      sarif-ruby (~> 0.1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -72,11 +75,8 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  rgl (~> 0.6)
   rspec (~> 3.13)
   rubocop
-  rubyzip (~> 2.3)
-  sarif-ruby (~> 0.1.0)
   statica!
 
 BUNDLED WITH

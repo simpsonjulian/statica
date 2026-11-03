@@ -36,6 +36,13 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'ostruct', '~> 0.6'
   spec.add_dependency 'rexml', '~> 3.2'
 
+  # Required at runtime by the scanners and the HTML report. Homebrew's formula
+  # installs the built .gem, which only pulls in gemspec dependencies, so these
+  # must live here rather than only in the Gemfile.
+  spec.add_dependency 'rgl', '~> 0.6'
+  spec.add_dependency 'rubyzip', '~> 2.3'
+  spec.add_dependency 'sarif-ruby', '~> 0.1.0'
+
   spec.bindir        = '.'
   spec.executables   = %w[statica csv2sarif]
   spec.require_paths = ['.']

@@ -17,8 +17,12 @@ Statica will run other tools in the Homebrew ecosystem, and present a single rep
 Statica builds upon the Homebrew ecosystem. If you have homebrew working on your computer, just run:
 
 ```bash
+  brew tap simpsonjulian/statica-tap
+  brew trust simpsonjulian/statica-tap
   brew install simpsonjulian/statica-tap/statica
 ```
+
+Recent versions of Homebrew ignore formulae from third-party taps until you trust them, which is what `brew trust` does.
 
 ### Docker
 
