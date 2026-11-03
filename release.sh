@@ -36,7 +36,9 @@ gem build statica.gemspec
 rm -f statica-"$version".gem
 
 git add statica.gemspec Gemfile.lock
-git commit -m "Bump version to ${version}"
+# The version may already be bumped (e.g. in a PR); an empty commit would
+# exit non-zero under `set -e` and abort before tagging
+git diff --cached --quiet || git commit -m "Bump version to ${version}"
 git push
 
 # Create GitHub release and update Homebrew. --target pins the tag to the
