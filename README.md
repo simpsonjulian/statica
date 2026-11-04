@@ -19,10 +19,11 @@ Statica builds upon the Homebrew ecosystem. If you have homebrew working on your
 ```bash
   brew tap simpsonjulian/statica-tap
   brew trust simpsonjulian/statica-tap
-  brew install simpsonjulian/statica-tap/statica
+  brew install simpsonjulian/statica-tap/statica unused-code/formulae/unused
 ```
 
 Recent versions of Homebrew ignore formulae from third-party taps until you trust them, which is what `brew trust` does.
+`unused` (used by the `unused_with_ctags` scanner) comes from its own tap, so it's installed by name alongside Statica.
 
 ### Docker
 
