@@ -51,8 +51,8 @@ abort "error: unknown likelihood(s) #{unknown.join(', ')}; expected #{LIKELIHOOD
 # missing binary looked identical to a crash.
 FORMULAE = { 'ctags' => 'ctags', 'unused' => 'unused-code/formulae/unused' }.freeze
 
-def capture(bin, *args, **opts)
-  Open3.capture3(bin, *args, **opts)
+def capture(bin, *, **)
+  Open3.capture3(bin, *, **)
 rescue Errno::ENOENT
   abort "error: #{bin} is not on PATH; install it with `brew install #{FORMULAE[bin]}`"
 end

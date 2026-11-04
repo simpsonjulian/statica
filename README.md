@@ -64,7 +64,7 @@ pip install semgrep-rules-manager
 `nuget-hintpath` read endoflife.date and nuget.org over HTTPS and degrade to fewer
 findings when offline.
 
-You'll also want Ruby 3.0.0 or later installed to do the HTML.
+You'll also want Ruby 3.2.0 or later installed to do the HTML.
 
 ## Usage
 

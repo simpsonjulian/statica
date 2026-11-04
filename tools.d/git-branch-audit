@@ -3,7 +3,6 @@
 
 require 'open3'
 require 'optparse'
-require 'set'
 require_relative '../statica_sarif'
 
 # Branch names that are expected to carry work back to the default branch. These are
@@ -51,8 +50,8 @@ end
 
 # For commands whose non-zero exit is an answer rather than a failure, such as
 # `diff --quiet` using exit 1 to mean "these differ".
-def git_succeeds?(dir, *args)
-  _out, _err, st = Open3.capture3('git', '-C', dir, *args)
+def git_succeeds?(dir, *)
+  _out, _err, st = Open3.capture3('git', '-C', dir, *)
   st.success?
 end
 
