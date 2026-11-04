@@ -14,7 +14,7 @@ export HOMEBREW_NO_SANDBOX_LINUX=1
 # parse current homebrew-core formulae ("unknown install step: ...")
 brew update
 
-brew install simpsonjulian/statica-tap/statica bearer/tap/bearer
+brew install simpsonjulian/statica-tap/statica bearer/tap/bearer unused-code/formulae/unused
 
 TEMP=$(mktemp -d)
 ( cd "${TEMP}" && gh repo clone WebGoat/WebGoat -- --depth 1  &&  statica WebGoat html )
