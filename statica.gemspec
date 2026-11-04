@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name          = 'statica'
-  spec.version       = "1.2.8"
+  spec.version       = "1.2.9"
   spec.authors       = ['simpsonjulian']
   spec.email         = ['simpsonjulian@gmail.com']
 
