@@ -51,6 +51,7 @@ brew install semgrep \
     trivy \
     sarif \
     lizard-analyzer \
+    scc \
     checkov \
     pmd \
     ripgrep \
@@ -64,6 +65,12 @@ pip install semgrep-rules-manager
 `commented-code` and `nuget-hintpath` scanners need no extra tools; `framework-eol` and
 `nuget-hintpath` read endoflife.date and nuget.org over HTTPS and degrade to fewer
 findings when offline.
+
+`scc` is used by the `scc-hotspots` and `scc-coupling` scanners, which read the last 12
+months of git history. `scc-hotspots` reports the files that are both complex and changed
+often; `scc-coupling` reports pairs of files that keep changing in the same commits,
+leaving out a file paired with its own test. Both need the scanned directory to be inside
+a git repository.
 
 You'll also want Ruby 3.2.0 or later installed to do the HTML.
 

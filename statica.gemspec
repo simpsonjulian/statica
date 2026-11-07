@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
     'csv2sarif',
     'graph_analyzer.rb',
     'statica_sarif.rb',
+    'statica_scc.rb',
     'html_report.rb',
     'template.erb',
     'tools.d/*'

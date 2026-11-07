@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Files that are both complex and changed often. Either alone is tolerable: complex code
+# nobody touches costs little, and simple code that changes often is cheap to change.
+# Together they mark where defects and slow reviews concentrate. Ranking comes from scc,
+# which scores complexity x change frequency over recent git history.
+
+require 'optparse'
+require_relative '../statica_sarif'
+require_relative '../statica_scc'
+
+RULE = 'hotspot'
+
+opts = { dir: '.', top: 10, since: '12.month', min_score: 0.0 }
+OptionParser.new do |o|
+  o.on('--top N', Integer, 'How many files to report (default 10)') { |v| opts[:top] = v }
+  o.on('--since WHEN', 'Any git date expression (default 12.month)') { |v| opts[:since] = v }
+  o.on('--min-score N', Float, 'Lowest hotspot score to report, 0-100 (default 0)') { |v| opts[:min_score] = v }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+abort "error: #{opts[:dir]} is not a directory" unless File.directory?(opts[:dir])
+
+report = Statica::Report.new('scc-hotspots', version: Statica::Scc.version)
+report.rule(RULE, 'File is both complex and changed often',
+            help_uri: 'https://github.com/boyter/scc')
+
+depth = Statica::Scc.depth_since(opts[:dir], opts[:since])
+report.invocation(since: opts[:since], commits: depth, top: opts[:top], min_score: opts[:min_score])
+
+# scc treats a depth of 0 as the entire history, which is the opposite of what an empty
+# window means.
+files = depth.zero? ? [] : Statica::Scc.report(opts[:dir], '--hotspots', depth).fetch('files', [])
+prefix = Statica::Scc.prefix(opts[:dir])
+
+ranked = files.filter_map do |file|
+  path = Statica::Scc.scoped(opts[:dir], prefix, file['file'])
+  [path, file] if path && file['score'].to_f >= opts[:min_score]
+end.first(opts[:top])
+
+ranked.each do |path, file|
+  report.add(RULE,
+             "#{path} is a hotspot (score #{file['score']}): complexity #{file['complexity']}, " \
+             "changed in #{file['commits']} of the last #{depth} commits by #{file['authors']} " \
+             'author(s). Complex code that changes often is where defects and slow reviews ' \
+             'concentrate.',
+             uri: path,
+             properties: file.slice('score', 'complexity', 'commits', 'linesChanged', 'authors',
+                                    'codeChurn', 'language'))
+end
+
+warn "#{files.size} file(s) scored over #{depth} commit(s) since #{opts[:since]}, reporting top #{ranked.size}"
+report.emit

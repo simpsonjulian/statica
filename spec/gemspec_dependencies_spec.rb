@@ -46,6 +46,23 @@ RSpec.describe 'statica.gemspec runtime dependencies' do
     expect(required_libs.keys).to include('sarif', 'zip', 'rgl/adjacency')
   end
 
+  # Specs load files from the checkout, so a helper missing from spec.files passes here
+  # and only fails with a LoadError once the gem is installed.
+  it 'packages every file that a packaged file loads with require_relative' do
+    missing = ruby_files.each_with_object({}) do |file, found|
+      File.foreach(File.join(root, file)) do |line|
+        relative = line[/^\s*require_relative\s+['"]([^'"]+)['"]/, 1]
+        next unless relative
+
+        target = File.expand_path("#{relative}.rb", File.dirname(File.join(root, file)))
+                     .delete_prefix("#{root}/")
+        (found[target] ||= []) << file unless gemspec.files.include?(target)
+      end
+    end
+
+    expect(missing).to be_empty, "loaded but not in spec.files (file => loaded by): #{missing}"
+  end
+
   it 'can load every required library from the runtime dependencies alone' do
     closure = runtime_closure(gemspec.runtime_dependencies.map(&:to_spec))
     load_path_args = closure.flat_map(&:full_require_paths).flat_map { |dir| ['-I', dir] }

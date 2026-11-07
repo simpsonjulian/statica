@@ -5,9 +5,10 @@ require 'json'
 require 'sarif'
 require 'time'
 
-# Shared SARIF plumbing for the scanners in tools.d. A scanner registers its rules, adds
-# results against them and calls emit; the quirks of sarif-ruby live here rather than in
-# seven copies.
+# Generates SARIF for the tools in tools.d that do not emit SARIF themselves. A scanner
+# registers its rules, adds results against them and calls emit; the quirks of sarif-ruby
+# live here rather than in every scanner. Running the underlying tools is the scanner's
+# job, not this file's.
 module Statica
   INFORMATION_URI = 'https://github.com/simpsonjulian/statica'
 
@@ -60,13 +61,15 @@ module Statica
     end
 
     # A finding: pass uri (with optional line and end_line) for somewhere in a file, or
-    # logical for a thing with no file at all, such as a branch or a commit.
+    # logical for a thing with no file at all, such as a branch or a commit. related lists
+    # the uris of other files the finding involves, such as the other half of a pair.
     def add(rule_id, text, uri: nil, line: nil, end_line: nil, logical: nil, kind: 'logical',
-            level: nil, properties: {}, fingerprints: nil)
+            level: nil, properties: {}, fingerprints: nil, related: [])
       @results << Sarif::Result.new(
         rule_id: rule_id, level: level || @rules[rule_id]&.level || 'note',
         message: Sarif::Message.new(text: text),
         locations: [location(uri, line, end_line, logical, kind)].compact,
+        related_locations: related.map { |other| location(other, nil, nil, nil, nil) },
         partial_fingerprints: fingerprints,
         properties: properties
       )

@@ -20,6 +20,7 @@ brew install semgrep \
     retire \
     trivy \
     lizard-analyzer \
+    scc \
     checkov \
     pmd \
     coreutils \
@@ -28,6 +29,8 @@ brew install semgrep \
     bearer/tap/bearer
 
 pipx install sarif-tools semgrep-rules-manager
-bundle config set without 'development'
+# Skip development gems for this run only. `bundle config set` would write this into the
+# checkout's .bundle/config, where it outlives the run and breaks `make test` afterwards.
+export BUNDLE_WITHOUT=development
 bundle install
 bundle exec ./statica WebGoat html

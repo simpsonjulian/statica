@@ -3,8 +3,10 @@ lint:
 	file tools.d/* | grep 'shell script' | awk -F ':' '{print $$1}' | xargs shellcheck
 	actionlint .github/workflows/*.yml
 
-test: lint
+spec:
 	bundle exec rspec spec
+
+test: lint spec
 	bundle exec ./statica . html
 
 clean:

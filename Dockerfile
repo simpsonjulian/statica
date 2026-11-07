@@ -45,6 +45,7 @@ RUN brew install \
     retire \
     trivy \
     lizard-analyzer \
+    scc \
     checkov \
     pmd \
     ripgrep \

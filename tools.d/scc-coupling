@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Pairs of files that keep changing in the same commits. Coupling that the code does not
+# make explicit, such as a hidden contract between two modules, or one concept split
+# across files that should be one, shows up here before it shows up in the design.
+# Pairs come from scc's change-coupling report over recent git history.
+
+require 'optparse'
+require_relative '../statica_sarif'
+require_relative '../statica_scc'
+
+RULE = 'change-coupling'
+
+# A test and the file it tests are meant to change together; reporting them is noise.
+TEST_NAME = /\A(?:test_)?(?<stem>.+?)(?:_spec|_test|\.spec|\.test|Tests?|Spec)?\z/
+
+opts = { dir: '.', top: 10, since: '12.month', min_degree: 25.0, min_shared: 3, weighted: true }
+OptionParser.new do |o|
+  o.on('--top N', Integer, 'How many pairs to report (default 10)') { |v| opts[:top] = v }
+  o.on('--since WHEN', 'Any git date expression (default 12.month)') { |v| opts[:since] = v }
+  o.on('--min-degree N', Float, 'Lowest coupling percentage to report (default 25)') { |v| opts[:min_degree] = v }
+  o.on('--min-shared N', Integer, 'Fewest shared commits to report (default 3)') { |v| opts[:min_shared] = v }
+  o.on('--[no-]weighted', 'Rank complex pairs above config and data files (default on)') { |v| opts[:weighted] = v }
+end.parse!(ARGV)
+opts[:dir] = ARGV.shift || '.'
+abort "error: #{opts[:dir]} is not a directory" unless File.directory?(opts[:dir])
+
+def stem(path)
+  TEST_NAME.match(File.basename(path, '.*'))[:stem].downcase
+end
+
+def test_pair?(path_a, path_b)
+  [path_a, path_b].any? { |path| path.match?(%r{(\A|/)(spec|tests?)/|_spec\.|_test\.|\.spec\.|\.test\.|Tests?\.}) } &&
+    stem(path_a) == stem(path_b)
+end
+
+report = Statica::Report.new('scc-coupling', version: Statica::Scc.version)
+report.rule(RULE, 'Files keep changing together', help_uri: 'https://github.com/boyter/scc')
+
+depth = Statica::Scc.depth_since(opts[:dir], opts[:since])
+report.invocation(since: opts[:since], commits: depth, top: opts[:top], weighted: opts[:weighted],
+                  min_degree: opts[:min_degree], min_shared: opts[:min_shared])
+
+flag = opts[:weighted] ? '--coupling-weighted' : '--coupling'
+# scc treats a depth of 0 as the entire history, which is the opposite of what an empty
+# window means.
+pairs = depth.zero? ? [] : Statica::Scc.report(opts[:dir], flag, depth).fetch('pairs', [])
+prefix = Statica::Scc.prefix(opts[:dir])
+
+ranked = pairs.filter_map do |pair|
+  path_a = Statica::Scc.scoped(opts[:dir], prefix, pair['fileA'])
+  path_b = Statica::Scc.scoped(opts[:dir], prefix, pair['fileB'])
+  next unless path_a && path_b
+  next if pair['degree'].to_f < opts[:min_degree] || pair['shared'].to_i < opts[:min_shared]
+  next if test_pair?(path_a, path_b)
+
+  [path_a, path_b, pair]
+end.first(opts[:top])
+
+ranked.each do |path_a, path_b, pair|
+  report.add(RULE,
+             "#{path_a} and #{path_b} changed together in #{pair['shared']} commit(s) " \
+             "(#{pair['degree']}% coupling) over the last #{depth} commits. Files that keep " \
+             'changing together often share a contract the code does not make explicit.',
+             uri: path_a, related: [path_b],
+             fingerprints: { 'filePair/v1' => [path_a, path_b].sort.join('|') },
+             properties: { 'coupledWith' => path_b }.merge(pair.slice('shared', 'commitsA', 'commitsB', 'degree')))
+end
+
+warn "#{pairs.size} coupled pair(s) over #{depth} commit(s) since #{opts[:since]}, reporting top #{ranked.size}"
+report.emit

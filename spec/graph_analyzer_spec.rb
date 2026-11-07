@@ -128,17 +128,17 @@ RSpec.describe GraphAnalyzer do
     # All three results point at the same file in the same scanned codebase, but
     # each string is shaped the way that tool actually emits it (verified against
     # real tool output run against an absolute source path):
-    #   - churn (git-derived) always emits a clean, root-relative path
+    #   - scc-hotspots (git-derived) always emits a clean, root-relative path
     #   - checkov emits an absolute path with only the leading "/" stripped
     #   - trivy emits a file:// URI resolved against its own uriBaseId
     let(:heterogeneous_results) do
       [
         OpenStruct.new(
-          tool: 'churn',
-          rule_id: 'top-file-churns',
+          tool: 'scc-hotspots',
+          rule_id: 'hotspot',
           file_url: 'Dockerfile',
           severity: 'note',
-          description: 'File has been committed to frequently.',
+          description: 'File is both complex and changed often.',
           linenum: 0
         ),
         OpenStruct.new(
