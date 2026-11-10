@@ -41,7 +41,7 @@ Gem::Specification.new do |spec|
   # installs the built .gem, which only pulls in gemspec dependencies, so these
   # must live here rather than only in the Gemfile.
   spec.add_dependency 'rgl', '~> 0.6'
-  spec.add_dependency 'rubyzip', '~> 2.3'
+  spec.add_dependency 'rubyzip', '>= 2.3', '< 4.0'
   spec.add_dependency 'sarif-ruby', '~> 0.1.0'
 
   spec.bindir        = '.'
